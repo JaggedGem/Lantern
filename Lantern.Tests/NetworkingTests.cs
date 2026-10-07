@@ -5,6 +5,8 @@ using System.Text.Json;
 using Lantern.Networking;
 using Lantern.Networking.Protocol;
 using Xunit;
+using Lantern.Models;
+using Lantern.Networking.Discovery;
 
 namespace Lantern.Tests;
 
@@ -253,6 +255,385 @@ public sealed class NetworkingTests
     }
 }
 
+public sealed class DiscoveryTests
+{
+    [Fact]
+    public void LocalDeviceIdentityProvider_GeneratesAndPersistsDeviceId()
+    {
+        // This test verifies that a device ID is generated and could be persisted
+        var id1 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId();
+        var id2 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId();
 
+        // Both calls should return the same ID (persistence working)
+        Assert.Equal(id1, id2);
+        Assert.NotEqual(Guid.Empty, id1);
+    }
 
+    [Fact]
+    public void LocalDevice_ConstructorValidatesInput()
+    {
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LocalDevice(Guid.NewGuid(), "Test", 0));
 
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new LocalDevice(Guid.NewGuid(), "Test", 65536));
+
+        Assert.Throws<ArgumentException>(() =>
+            new LocalDevice(Guid.NewGuid(), "", 5000));
+    }
+
+    [Fact]
+    public void Device_UpdatesMaintainsLastSeen()
+    {
+        var device = new Device(Guid.NewGuid(), "Test", IPAddress.Loopback, 5000);
+        var initialLastSeen = device.LastSeen;
+
+        // Allow small time delay
+        System.Threading.Thread.Sleep(10);
+        device.RefreshLastSeen();
+
+        Assert.True(device.LastSeen > initialLastSeen);
+    }
+
+    [Fact]
+    public void Device_UpdateNameRefreshesLastSeen()
+    {
+        var device = new Device(Guid.NewGuid(), "Test", IPAddress.Loopback, 5000);
+        var initialLastSeen = device.LastSeen;
+
+        System.Threading.Thread.Sleep(10);
+        device.UpdateName("NewName");
+
+        Assert.Equal("NewName", device.Name);
+        Assert.True(device.LastSeen > initialLastSeen);
+    }
+
+    [Fact]
+    public void Device_UpdateIpAddressRefreshesLastSeen()
+    {
+        var device = new Device(Guid.NewGuid(), "Test", IPAddress.Loopback, 5000);
+        var initialLastSeen = device.LastSeen;
+
+        System.Threading.Thread.Sleep(10);
+        device.UpdateIpAddress(IPAddress.Parse("192.168.1.1"));
+
+        Assert.Equal(IPAddress.Parse("192.168.1.1"), device.IpAddress);
+        Assert.True(device.LastSeen > initialLastSeen);
+    }
+
+    [Fact]
+    public void Device_UpdatePortRefreshesLastSeen()
+    {
+        var device = new Device(Guid.NewGuid(), "Test", IPAddress.Loopback, 5000);
+        var initialLastSeen = device.LastSeen;
+
+        System.Threading.Thread.Sleep(10);
+        device.UpdatePort(6000);
+
+        Assert.Equal(6000, device.Port);
+        Assert.True(device.LastSeen > initialLastSeen);
+    }
+
+    [Fact]
+    public void Device_UpdateStatusRefreshesLastSeen()
+    {
+        var device = new Device(Guid.NewGuid(), "Test", IPAddress.Loopback, 5000);
+        var initialLastSeen = device.LastSeen;
+
+        System.Threading.Thread.Sleep(10);
+        device.UpdateStatus(DeviceStatus.Online);
+
+        Assert.Equal(DeviceStatus.Online, device.Status);
+        Assert.True(device.LastSeen > initialLastSeen);
+    }
+
+    [Fact]
+    public void DiscoveryMessage_SerializesAndDeserializes()
+    {
+        var message = new DiscoveryMessage
+        {
+            Type = DiscoveryMessageType.Announcement,
+            DeviceId = Guid.NewGuid(),
+            DeviceName = "TestDevice",
+            TcpPort = 5000,
+            Version = DiscoveryProtocolConstants.ProtocolVersion
+        };
+
+        var json = JsonSerializer.Serialize(message);
+        var deserialized = JsonSerializer.Deserialize<DiscoveryMessage>(json);
+
+        Assert.NotNull(deserialized);
+        Assert.Equal(message.Type, deserialized.Type);
+        Assert.Equal(message.DeviceId, deserialized.DeviceId);
+        Assert.Equal(message.DeviceName, deserialized.DeviceName);
+        Assert.Equal(message.TcpPort, deserialized.TcpPort);
+        Assert.Equal(DiscoveryProtocolConstants.ProtocolVersion, deserialized.Version);
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_StartsAndStops()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        await using var discovery = new DeviceDiscovery(localDevice);
+
+        Assert.False(discovery.IsRunning);
+
+        await discovery.StartAsync();
+        Assert.True(discovery.IsRunning);
+
+        await discovery.StopAsync();
+        Assert.False(discovery.IsRunning);
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_RejectsDoubleStart()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        await using var discovery = new DeviceDiscovery(localDevice);
+
+        await discovery.StartAsync();
+        await Assert.ThrowsAsync<InvalidOperationException>(() => discovery.StartAsync());
+        await discovery.StopAsync();
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_RepeatedStartStopWorks()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        await using var discovery = new DeviceDiscovery(localDevice);
+
+        await discovery.StartAsync();
+        Assert.True(discovery.IsRunning);
+        await discovery.StopAsync();
+        Assert.False(discovery.IsRunning);
+
+        await discovery.StartAsync();
+        Assert.True(discovery.IsRunning);
+        await discovery.StopAsync();
+        Assert.False(discovery.IsRunning);
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_IgnoresLocalDevice()
+    {
+        var localDeviceId = Guid.NewGuid();
+        var localDevice = new LocalDevice(localDeviceId, "LocalTest", 5000);
+
+        using var discovery = new DeviceDiscovery(localDevice);
+
+        var deviceAddedFired = false;
+        discovery.DeviceDiscovered += (_, _) => { deviceAddedFired = true; };
+
+        // Simulate receiving our own announcement
+        var selfMessage = new DiscoveryMessage
+        {
+            Type = DiscoveryMessageType.Announcement,
+            DeviceId = localDeviceId,
+            DeviceName = "LocalTest",
+            TcpPort = 5000,
+            Version = DiscoveryProtocolConstants.ProtocolVersion
+        };
+
+        var json = JsonSerializer.Serialize(selfMessage);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+        // This is a reflection-based test simulating internal processing
+        // In a real scenario, this would be received via UDP
+        var processMethod = typeof(DeviceDiscovery).GetMethod(
+            "ProcessDiscoveryPacket",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        if (processMethod != null)
+        {
+            processMethod.Invoke(discovery, new object[] { bytes, new System.Net.IPEndPoint(IPAddress.Loopback, 12345) });
+        }
+
+        // Local device should not be added
+        var devices = discovery.GetDiscoveredDevices();
+        Assert.Empty(devices);
+        Assert.False(deviceAddedFired);
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_RejectsInvalidMessages()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        using var discovery = new DeviceDiscovery(localDevice);
+
+        var deviceAddedFired = false;
+        discovery.DeviceDiscovered += (_, _) => { deviceAddedFired = true; };
+
+        var processMethod = typeof(DeviceDiscovery).GetMethod(
+            "ProcessDiscoveryPacket",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        if (processMethod != null)
+        {
+            // Test invalid JSON
+            var invalidJson = System.Text.Encoding.UTF8.GetBytes("not-json");
+            processMethod.Invoke(discovery, new object[] { invalidJson, new System.Net.IPEndPoint(IPAddress.Loopback, 12345) });
+
+            // Test message without name
+            var noNameMessage = new DiscoveryMessage
+            {
+                Type = DiscoveryMessageType.Announcement,
+                DeviceId = Guid.NewGuid(),
+                DeviceName = "",
+                TcpPort = 5000,
+                Version = DiscoveryProtocolConstants.ProtocolVersion
+            };
+            var noNameJson = JsonSerializer.Serialize(noNameMessage);
+            var noNameBytes = System.Text.Encoding.UTF8.GetBytes(noNameJson);
+            processMethod.Invoke(discovery, new object[] { noNameBytes, new System.Net.IPEndPoint(IPAddress.Loopback, 12345) });
+
+            // Test invalid port
+            var invalidPortMessage = new DiscoveryMessage
+            {
+                Type = DiscoveryMessageType.Announcement,
+                DeviceId = Guid.NewGuid(),
+                DeviceName = "Test",
+                TcpPort = 70000,
+                Version = DiscoveryProtocolConstants.ProtocolVersion
+            };
+            var invalidPortJson = JsonSerializer.Serialize(invalidPortMessage);
+            var invalidPortBytes = System.Text.Encoding.UTF8.GetBytes(invalidPortJson);
+            processMethod.Invoke(discovery, new object[] { invalidPortBytes, new System.Net.IPEndPoint(IPAddress.Loopback, 12345) });
+
+            // Test unsupported version
+            var wrongVersionMessage = new DiscoveryMessage
+            {
+                Type = DiscoveryMessageType.Announcement,
+                DeviceId = Guid.NewGuid(),
+                DeviceName = "Test",
+                TcpPort = 5000,
+                Version = 99
+            };
+            var wrongVersionJson = JsonSerializer.Serialize(wrongVersionMessage);
+            var wrongVersionBytes = System.Text.Encoding.UTF8.GetBytes(wrongVersionJson);
+            processMethod.Invoke(discovery, new object[] { wrongVersionBytes, new System.Net.IPEndPoint(IPAddress.Loopback, 12345) });
+        }
+
+        // No devices should have been added
+        var devices = discovery.GetDiscoveredDevices();
+        Assert.Empty(devices);
+        Assert.False(deviceAddedFired);
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_SupportsProcessingValidMessage()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        using var discovery = new DeviceDiscovery(localDevice);
+
+        var deviceDiscoveredEventFired = false;
+        Device? discoveredDevice = null;
+        discovery.DeviceDiscovered += (_, e) =>
+        {
+            deviceDiscoveredEventFired = true;
+            discoveredDevice = e.Device;
+        };
+
+        var remoteDeviceId = Guid.NewGuid();
+        var message = new DiscoveryMessage
+        {
+            Type = DiscoveryMessageType.Announcement,
+            DeviceId = remoteDeviceId,
+            DeviceName = "RemoteDevice",
+            TcpPort = 6000,
+            Version = DiscoveryProtocolConstants.ProtocolVersion
+        };
+
+        var json = JsonSerializer.Serialize(message);
+        var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+        var processMethod = typeof(DeviceDiscovery).GetMethod(
+            "ProcessDiscoveryPacket",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        if (processMethod != null)
+        {
+            processMethod.Invoke(discovery, new object[] { bytes, new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.1"), 12345) });
+        }
+
+        var devices = discovery.GetDiscoveredDevices();
+        Assert.Single(devices);
+        Assert.True(deviceDiscoveredEventFired);
+        Assert.NotNull(discoveredDevice);
+        Assert.Equal(remoteDeviceId, discoveredDevice.Id);
+        Assert.Equal("RemoteDevice", discoveredDevice.Name);
+        Assert.Equal(6000, discoveredDevice.Port);
+        Assert.Equal(IPAddress.Parse("192.168.1.1"), discoveredDevice.IpAddress);
+        Assert.Equal(DeviceStatus.Online, discoveredDevice.Status);
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_UpdatesExistingDeviceIpAddress()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        using var discovery = new DeviceDiscovery(localDevice);
+
+        var remoteDeviceId = Guid.NewGuid();
+
+        // First announcement
+        var message1 = new DiscoveryMessage
+        {
+            Type = DiscoveryMessageType.Announcement,
+            DeviceId = remoteDeviceId,
+            DeviceName = "RemoteDevice",
+            TcpPort = 6000,
+            Version = DiscoveryProtocolConstants.ProtocolVersion
+        };
+
+        var json1 = JsonSerializer.Serialize(message1);
+        var bytes1 = System.Text.Encoding.UTF8.GetBytes(json1);
+
+        var processMethod = typeof(DeviceDiscovery).GetMethod(
+            "ProcessDiscoveryPacket",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+
+        if (processMethod != null)
+        {
+            processMethod.Invoke(discovery, new object[] { bytes1, new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.1"), 12345) });
+
+            // Second announcement with different IP
+            var message2 = new DiscoveryMessage
+            {
+                Type = DiscoveryMessageType.Announcement,
+                DeviceId = remoteDeviceId,
+                DeviceName = "RemoteDevice",
+                TcpPort = 6000,
+                Version = DiscoveryProtocolConstants.ProtocolVersion
+            };
+
+            var json2 = JsonSerializer.Serialize(message2);
+            var bytes2 = System.Text.Encoding.UTF8.GetBytes(json2);
+            processMethod.Invoke(discovery, new object[] { bytes2, new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.99"), 12345) });
+        }
+
+        var devices = discovery.GetDiscoveredDevices();
+        Assert.Single(devices);
+        Assert.Equal(IPAddress.Parse("192.168.1.99"), devices[0].IpAddress);
+    }
+
+    [Fact]
+    public void DeviceDiscovery_SupportsDisposal()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        var discovery = new DeviceDiscovery(localDevice);
+
+        // Should not throw
+        discovery.Dispose();
+        discovery.Dispose();
+    }
+
+    [Fact]
+    public async Task DeviceDiscovery_SupportsAsyncDisposal()
+    {
+        var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
+        var discovery = new DeviceDiscovery(localDevice);
+
+        // Should not throw
+        await discovery.DisposeAsync();
+        await discovery.DisposeAsync();
+    }
+}
