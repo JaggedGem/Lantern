@@ -1,111 +1,187 @@
 ﻿using System.Net;
 using System.Net.Sockets;
+using Lantern.Networking.Protocol;
 
 namespace Lantern.Networking;
 
-public sealed class NetworkServer
+public sealed class NetworkServer : IDisposable, IAsyncDisposable
 {
     private readonly object _syncRoot = new();
+    private readonly int _configuredPort;
+    private readonly ProtocolSerializer _protocolSerializer = new();
     private TcpListener? _listener;
-    private CancellationTokenSource? _cancellationSource;
+    private CancellationTokenSource? _shutdownSource;
+    private Task? _acceptLoopTask;
     private bool _isRunning;
 
-    public NetworkServer(int port) {
-        if (port is < 1 or > IPEndPoint.MaxPort) {
-            throw new ArgumentOutOfRangeException(nameof(port), port, "The port must be between 1 and 65535.");
+    public NetworkServer(int port)
+    {
+        if (port is < 0 or > IPEndPoint.MaxPort)
+        {
+            throw new ArgumentOutOfRangeException(nameof(port), port, "The port must be between 0 and 65535.");
         }
 
-        Port = port;
+        _configuredPort = port;
     }
 
-    public int Port { get; }
+    public int Port => _configuredPort;
 
-    public bool IsRunning {
-        get {
-            lock (_syncRoot) {
+    public int? ListeningPort
+    {
+        get
+        {
+            lock (_syncRoot)
+            {
+                return _listener is null ? null : ((IPEndPoint)_listener.LocalEndpoint).Port;
+            }
+        }
+    }
+
+    public bool IsRunning
+    {
+        get
+        {
+            lock (_syncRoot)
+            {
                 return _isRunning;
             }
         }
     }
 
-    public event EventHandler<Connection>? ConnectionAccepted;
+    public event EventHandler<ConnectionAcceptedEventArgs>? ConnectionAccepted;
 
-    public void Start() {
-        lock (_syncRoot) {
-            if (_isRunning) {
+    public Task StartAsync(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        lock (_syncRoot)
+        {
+            if (_isRunning)
+            {
                 throw new InvalidOperationException("The network server is already running.");
             }
 
-            var listener = new TcpListener(IPAddress.Any, Port);
-            var cancellationSource = new CancellationTokenSource();
+            var listener = new TcpListener(IPAddress.Any, _configuredPort);
+            var shutdownSource = new CancellationTokenSource();
 
-            try {
+            try
+            {
                 listener.Start();
-            } catch {
-                cancellationSource.Dispose();
+            }
+            catch
+            {
+                shutdownSource.Dispose();
+                listener.Dispose();
                 throw;
             }
 
             _listener = listener;
-            _cancellationSource = cancellationSource;
+            _shutdownSource = shutdownSource;
             _isRunning = true;
-
-            _ = AcceptConnectionsAsync(listener, cancellationSource);
+            _acceptLoopTask = AcceptConnectionsAsync(listener, shutdownSource);
         }
+
+        return Task.CompletedTask;
     }
 
-    public void Stop() {
+    public async Task StopAsync()
+    {
+        Task? acceptLoopTask;
+        CancellationTokenSource? shutdownSource;
         TcpListener? listener;
-        CancellationTokenSource? cancellationSource;
 
-        lock (_syncRoot) {
-            if (!_isRunning) {
+        lock (_syncRoot)
+        {
+            if (!_isRunning)
+            {
                 return;
             }
 
             _isRunning = false;
+            acceptLoopTask = _acceptLoopTask;
+            shutdownSource = _shutdownSource;
             listener = _listener;
-            cancellationSource = _cancellationSource;
+            _acceptLoopTask = null;
+            _shutdownSource = null;
             _listener = null;
-            _cancellationSource = null;
         }
 
-        cancellationSource?.Cancel();
-        listener?.Stop();
-    }
+        try
+        {
+            shutdownSource?.Cancel();
+            listener?.Stop();
 
-    private async Task AcceptConnectionsAsync(
-        TcpListener listener,
-        CancellationTokenSource cancellationSource) {
-        try {
-            while (!cancellationSource.IsCancellationRequested) {
-                TcpClient client;
-
-                try {
-                    client = await listener.AcceptTcpClientAsync(cancellationSource.Token);
-                }
-                catch (OperationCanceledException) when (cancellationSource.IsCancellationRequested) {
-                    break;
-                }
-                catch (ObjectDisposedException) when (cancellationSource.IsCancellationRequested) {
-                    break;
-                }
-
-                var connection = new Connection(client);
-                ConnectionAccepted?.Invoke(this, connection);
+            if (acceptLoopTask is not null)
+            {
+                await acceptLoopTask.ConfigureAwait(false);
             }
         }
-        finally {
-            lock (_syncRoot) {
-                if (ReferenceEquals(_cancellationSource, cancellationSource)) {
+        catch (OperationCanceledException) when (shutdownSource?.IsCancellationRequested == true)
+        {
+        }
+        catch (ObjectDisposedException) when (shutdownSource?.IsCancellationRequested == true)
+        {
+        }
+        finally
+        {
+            shutdownSource?.Dispose();
+            listener?.Dispose();
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        await StopAsync().ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        StopAsync().GetAwaiter().GetResult();
+    }
+
+    private async Task AcceptConnectionsAsync(TcpListener listener, CancellationTokenSource shutdownSource)
+    {
+        var cancellationToken = shutdownSource.Token;
+
+        try
+        {
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                TcpClient client;
+
+                try
+                {
+                    client = await listener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+                catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
+                {
+                    break;
+                }
+
+                client.NoDelay = true;
+                var connection = new Connection(client, _protocolSerializer);
+                ConnectionAccepted?.Invoke(this, new ConnectionAcceptedEventArgs(connection));
+            }
+        }
+        finally
+        {
+            lock (_syncRoot)
+            {
+                if (ReferenceEquals(_listener, listener))
+                {
                     _isRunning = false;
                     _listener = null;
-                    _cancellationSource = null;
+                    _shutdownSource = null;
+                    _acceptLoopTask = null;
                 }
             }
 
             listener.Stop();
-            cancellationSource.Dispose();
+            shutdownSource.Dispose();
         }
     }
 }
