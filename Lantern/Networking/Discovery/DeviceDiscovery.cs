@@ -48,564 +48,256 @@ public sealed class DeviceRemovedEventArgs : EventArgs
     public Guid DeviceId { get; }
 }
 
-/// <summary>
-/// Manages LAN device discovery using UDP broadcast.
-/// Automatically discovers peer application instances and tracks their availability.
-/// </summary>
+/// <summary>IPv4 LAN discovery. Returned devices/events are detached snapshots.</summary>
 public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
 {
-    private const int DiscoveryUdpPort = 52845;
-    private const int HeartbeatIntervalMs = 3000;
-    private const int OfflineTimeoutMs = 15000;
-    private const int ExpirationCheckIntervalMs = 5000;
-
-    private readonly LocalDevice _localDevice;
-    private readonly ReaderWriterLockSlim _devicesLock = new();
+    private readonly object _sync = new();
+    private readonly LocalDevice _local;
+    private readonly DiscoveryOptions _options;
+    private readonly TimeProvider _clock;
     private readonly Dictionary<Guid, Device> _devices = new();
-    private UdpClient? _udpClient;
-    private CancellationTokenSource? _shutdownSource;
-    private Task? _receiveLoopTask;
-    private Task? _heartbeatLoopTask;
-    private Task? _expirationCheckLoopTask;
-    private int _isDisposed;
-    private bool _isRunning;
+    private readonly Dictionary<Guid, long> _observed = new();
+    private UdpClient? _socket;
+    private CancellationTokenSource? _shutdown;
+    private Task? _completion;
+    private Task? _stop;
+    private bool _disposed;
 
-    /// <summary>
-    /// Fired when a new device is discovered.
-    /// </summary>
+    public DeviceDiscovery(LocalDevice localDevice, DiscoveryOptions? options = null, TimeProvider? timeProvider = null)
+    {
+        _local = localDevice ?? throw new ArgumentNullException(nameof(localDevice));
+        _options = options ?? new DiscoveryOptions();
+        _options.Validate();
+        _clock = timeProvider ?? TimeProvider.System;
+    }
+
     public event EventHandler<DeviceDiscoveredEventArgs>? DeviceDiscovered;
-
-    /// <summary>
-    /// Fired when a device's status changes (e.g., Online -> Offline).
-    /// </summary>
+    public event EventHandler<DeviceDiscoveredEventArgs>? DeviceUpdated;
     public event EventHandler<DeviceStatusChangedEventArgs>? DeviceStatusChanged;
-
-    /// <summary>
-    /// Fired when a device is removed (e.g., after offline timeout).
-    /// </summary>
     public event EventHandler<DeviceRemovedEventArgs>? DeviceRemoved;
+    public event EventHandler<Exception>? Error;
+    public bool IsRunning { get { lock (_sync) return _socket != null && _stop == null && _completion?.IsCompleted == false; } }
+    public Task Completion { get { lock (_sync) return _completion ?? Task.CompletedTask; } }
 
-    public DeviceDiscovery(LocalDevice localDevice)
-    {
-        _localDevice = localDevice ?? throw new ArgumentNullException(nameof(localDevice));
-    }
-
-    /// <summary>
-    /// Gets whether discovery is currently running.
-    /// </summary>
-    public bool IsRunning
-    {
-        get
-        {
-            _devicesLock.EnterReadLock();
-            try
-            {
-                return _isRunning;
-            }
-            finally
-            {
-                _devicesLock.ExitReadLock();
-            }
-        }
-    }
-
-    /// <summary>
-    /// Gets a snapshot of currently discovered devices (excluding the local device).
-    /// </summary>
     public IReadOnlyList<Device> GetDiscoveredDevices()
     {
-        _devicesLock.EnterReadLock();
-        try
-        {
-            return _devices.Values.ToList();
-        }
-        finally
-        {
-            _devicesLock.ExitReadLock();
-        }
+        lock (_sync) return _devices.Values.Select(device => device.Snapshot()).ToList().AsReadOnly();
     }
 
-    /// <summary>
-    /// Starts the discovery service.
-    /// Begins listening for announcements and sending periodic heartbeats.
-    /// </summary>
-    public async Task StartAsync(CancellationToken cancellationToken = default)
+    /// <summary>Startup token only; StopAsync controls and drains the running service.</summary>
+    public Task StartAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
+        lock (_sync)
+        {
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_socket != null) throw new InvalidOperationException("Discovery is running or stopping.");
+            var socket = new UdpClient(new IPEndPoint(IPAddress.Any, _options.UdpPort)) { EnableBroadcast = true };
+            _socket = socket;
+            _shutdown = new CancellationTokenSource();
+            _stop = null;
+            _completion = RunAsync(socket, _shutdown);
+        }
+        return Task.CompletedTask;
+    }
 
-        _devicesLock.EnterWriteLock();
+    public Task StopAsync()
+    {
+        lock (_sync)
+        {
+            if (_socket == null) return Task.CompletedTask;
+            return _stop ??= StopCoreAsync(_socket, _shutdown!, _completion!);
+        }
+    }
+
+    private async Task StopCoreAsync(UdpClient socket, CancellationTokenSource shutdown, Task completion)
+    {
+        await Task.Yield();
+        try { shutdown.Cancel(); socket.Dispose(); await completion.ConfigureAwait(false); }
+        finally
+        {
+            socket.Dispose();
+            shutdown.Dispose();
+            lock (_sync) { _socket = null; _shutdown = null; _completion = null; _stop = null; }
+        }
+    }
+
+    private async Task RunAsync(UdpClient socket, CancellationTokenSource shutdown)
+    {
+        await Task.Yield();
+        var tasks = new[] { ReceiveAsync(socket, shutdown.Token), AnnounceAsync(socket, shutdown.Token), ExpireAsync(shutdown.Token) };
+        await Task.WhenAny(tasks).ConfigureAwait(false);
+        shutdown.Cancel();
+        socket.Dispose();
+        await Task.WhenAll(tasks).ConfigureAwait(false);
+    }
+
+    private async Task ReceiveAsync(UdpClient socket, CancellationToken token)
+    {
         try
         {
-            if (_isRunning)
+            while (!token.IsCancellationRequested)
             {
-                throw new InvalidOperationException("Device discovery is already running.");
+                try
+                {
+                    var packet = await socket.ReceiveAsync(token).ConfigureAwait(false);
+                    ProcessDiscoveryPacket(packet.Buffer, packet.RemoteEndPoint);
+                }
+                catch (SocketException exception) when (!token.IsCancellationRequested)
+                {
+                    ReportError(exception);
+                    await Task.Delay(TimeSpan.FromMilliseconds(250), _clock, token).ConfigureAwait(false);
+                }
             }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (ObjectDisposedException) when (token.IsCancellationRequested) { }
+        catch (SocketException) when (token.IsCancellationRequested) { }
+    }
 
-            if (Volatile.Read(ref _isDisposed) != 0)
+    private async Task AnnounceAsync(UdpClient socket, CancellationToken token)
+    {
+        var message = new DiscoveryMessage { Version = DiscoveryProtocolConstants.ProtocolVersion,
+            Type = DiscoveryMessageType.Announcement, DeviceId = _local.Id, DeviceName = _local.Name, TcpPort = _local.Port };
+        var bytes = JsonSerializer.SerializeToUtf8Bytes(message);
+        if (bytes.Length > DiscoveryProtocolConstants.MaxDiscoveryPacketSize)
+            throw new InvalidOperationException("The local announcement exceeds the protocol limit.");
+        try
+        {
+            while (true)
             {
-                throw new ObjectDisposedException(nameof(DeviceDiscovery));
+                // Directed broadcasts route to each eligible IPv4 LAN instead of a single default adapter.
+                foreach (var address in GetBroadcastAddresses())
+                {
+                    try { await socket.SendAsync(bytes, new IPEndPoint(address, _options.UdpPort), token).ConfigureAwait(false); }
+                    catch (SocketException exception) when (!token.IsCancellationRequested) { ReportError(exception); }
+                }
+                await Task.Delay(_options.HeartbeatInterval, _clock, token).ConfigureAwait(false);
             }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (ObjectDisposedException) when (token.IsCancellationRequested) { }
+        catch (SocketException) when (token.IsCancellationRequested) { }
+    }
 
-            var shutdownSource = new CancellationTokenSource();
-            UdpClient? udpClient = null;
-
+    private IEnumerable<IPAddress> GetBroadcastAddresses()
+    {
+        var addresses = new HashSet<IPAddress>();
+        foreach (var adapter in System.Net.NetworkInformation.NetworkInterface.GetAllNetworkInterfaces())
+        {
+            if (adapter.OperationalStatus != System.Net.NetworkInformation.OperationalStatus.Up
+                || adapter.NetworkInterfaceType is System.Net.NetworkInformation.NetworkInterfaceType.Loopback
+                    or System.Net.NetworkInformation.NetworkInterfaceType.Tunnel) continue;
             try
             {
-                udpClient = new UdpClient(new IPEndPoint(IPAddress.Any, DiscoveryUdpPort))
+                foreach (var unicast in adapter.GetIPProperties().UnicastAddresses)
                 {
-                    EnableBroadcast = true,
-                    MulticastLoopback = false
-                };
-
-                _udpClient = udpClient;
-                _shutdownSource = shutdownSource;
-                _isRunning = true;
-
-                // Start background tasks
-                _receiveLoopTask = ReceiveLoopAsync(_udpClient, shutdownSource.Token);
-                _heartbeatLoopTask = HeartbeatLoopAsync(_udpClient, shutdownSource.Token);
-                _expirationCheckLoopTask = ExpirationCheckLoopAsync(shutdownSource.Token);
+                    if (unicast.Address.AddressFamily != AddressFamily.InterNetwork || IPAddress.IsLoopback(unicast.Address)) continue;
+                    var ip = unicast.Address.GetAddressBytes();
+                    var mask = unicast.IPv4Mask.GetAddressBytes();
+                    if (mask.All(value => value == 255)) continue;
+                    addresses.Add(new IPAddress(ip.Zip(mask, (value, subnet) => (byte)(value | ~subnet)).ToArray()));
+                }
             }
-            catch
-            {
-                shutdownSource?.Dispose();
-                udpClient?.Dispose();
-                _isRunning = false;
-                throw;
-            }
+            catch (System.Net.NetworkInformation.NetworkInformationException exception) { ReportError(exception); }
         }
-        finally
-        {
-            _devicesLock.ExitWriteLock();
-        }
-
-        // Send initial announcement
-        await SendAnnouncementAsync(cancellationToken).ConfigureAwait(false);
+        return addresses;
     }
 
-    /// <summary>
-    /// Stops the discovery service cleanly.
-    /// </summary>
-    public async Task StopAsync()
+    private async Task ExpireAsync(CancellationToken token)
     {
-        UdpClient? udpClient;
-        CancellationTokenSource? shutdownSource;
-        Task? receiveLoopTask;
-        Task? heartbeatLoopTask;
-        Task? expirationCheckLoopTask;
-
-        _devicesLock.EnterWriteLock();
         try
         {
-            if (!_isRunning)
+            while (true)
             {
-                return;
-            }
-
-            _isRunning = false;
-            udpClient = _udpClient;
-            shutdownSource = _shutdownSource;
-            receiveLoopTask = _receiveLoopTask;
-            heartbeatLoopTask = _heartbeatLoopTask;
-            expirationCheckLoopTask = _expirationCheckLoopTask;
-
-            _udpClient = null;
-            _shutdownSource = null;
-            _receiveLoopTask = null;
-            _heartbeatLoopTask = null;
-            _expirationCheckLoopTask = null;
-        }
-        finally
-        {
-            _devicesLock.ExitWriteLock();
-        }
-
-        try
-        {
-            shutdownSource?.Cancel();
-            udpClient?.Dispose();
-
-            if (receiveLoopTask is not null)
-            {
-                await receiveLoopTask.ConfigureAwait(false);
-            }
-
-            if (heartbeatLoopTask is not null)
-            {
-                await heartbeatLoopTask.ConfigureAwait(false);
-            }
-
-            if (expirationCheckLoopTask is not null)
-            {
-                await expirationCheckLoopTask.ConfigureAwait(false);
+                await Task.Delay(_options.ExpirationInterval, _clock, token).ConfigureAwait(false);
+                CheckPresence();
             }
         }
-        catch (OperationCanceledException) when (shutdownSource?.IsCancellationRequested == true)
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+    }
+
+    private void ProcessDiscoveryPacket(byte[] data, IPEndPoint endpoint)
+    {
+        if (data.Length == 0 || data.Length > DiscoveryProtocolConstants.MaxDiscoveryPacketSize) return;
+        DiscoveryMessage? message;
+        try { message = JsonSerializer.Deserialize<DiscoveryMessage>(data); }
+        catch (JsonException) { return; }
+        if (message == null || message.Version != DiscoveryProtocolConstants.ProtocolVersion
+            || message.Type != DiscoveryMessageType.Announcement || message.DeviceId == Guid.Empty
+            || message.DeviceId == _local.Id || string.IsNullOrWhiteSpace(message.DeviceName)
+            || message.DeviceName.Length > 128 || message.DeviceName.Any(char.IsControl)
+            || message.TcpPort is < 1 or > 65535 || endpoint.Address.AddressFamily != AddressFamily.InterNetwork
+            || IPAddress.IsLoopback(endpoint.Address) || endpoint.Address.Equals(IPAddress.Any)
+            || endpoint.Address.Equals(IPAddress.Broadcast)) return;
+
+        Device snapshot;
+        bool added, changed;
+        DeviceStatus previous;
+        lock (_sync)
         {
+            added = !_devices.TryGetValue(message.DeviceId, out var device);
+            if (added && _devices.Count >= _options.MaximumDevices) return;
+            device ??= new Device(message.DeviceId, message.DeviceName, endpoint.Address, message.TcpPort);
+            previous = device.Status;
+            changed = device.Name != message.DeviceName || !device.IpAddress.Equals(endpoint.Address) || device.Port != message.TcpPort;
+            device.Observe(message.DeviceName, endpoint.Address, message.TcpPort, _clock.GetUtcNow());
+            _devices[message.DeviceId] = device;
+            _observed[message.DeviceId] = _clock.GetTimestamp();
+            snapshot = device.Snapshot();
         }
-        catch (ObjectDisposedException) when (shutdownSource?.IsCancellationRequested == true)
+        if (added) DeviceDiscovered?.Invoke(this, new DeviceDiscoveredEventArgs(snapshot));
+        else
         {
-        }
-        finally
-        {
-            shutdownSource?.Dispose();
-            udpClient?.Dispose();
+            if (changed) DeviceUpdated?.Invoke(this, new DeviceDiscoveredEventArgs(snapshot.Snapshot()));
+            if (previous != DeviceStatus.Online)
+                DeviceStatusChanged?.Invoke(this, new DeviceStatusChangedEventArgs(snapshot, previous, DeviceStatus.Online));
         }
     }
 
-    public void Dispose()
+    private void CheckPresence()
     {
-        if (Interlocked.Exchange(ref _isDisposed, 1) != 0)
+        var changes = new List<(Device, DeviceStatus)>();
+        lock (_sync)
         {
-            return;
+            var now = _clock.GetTimestamp();
+            foreach (var device in _devices.Values)
+            {
+                if (device.Status == DeviceStatus.Online && _clock.GetElapsedTime(_observed[device.Id], now) > _options.OfflineTimeout)
+                {
+                    var previous = device.Status;
+                    device.UpdateStatus(DeviceStatus.Offline);
+                    changes.Add((device.Snapshot(), previous));
+                }
+            }
         }
+        foreach (var (device, previous) in changes)
+            DeviceStatusChanged?.Invoke(this, new DeviceStatusChangedEventArgs(device, previous, DeviceStatus.Offline));
+    }
 
-        StopAsync().GetAwaiter().GetResult();
-        _devicesLock.Dispose();
+    /// <summary>Explicit pruning: heartbeat expiry alone never deletes an installation.</summary>
+    public bool ForgetOfflineDevice(Guid id)
+    {
+        lock (_sync)
+        {
+            if (!_devices.TryGetValue(id, out var device) || device.Status != DeviceStatus.Offline) return false;
+            _devices.Remove(id);
+            _observed.Remove(id);
+        }
+        DeviceRemoved?.Invoke(this, new DeviceRemovedEventArgs(id));
+        return true;
+    }
+
+    private void ReportError(Exception exception)
+    {
+        System.Diagnostics.Trace.TraceError(exception.ToString());
+        Error?.Invoke(this, exception);
     }
 
     public async ValueTask DisposeAsync()
     {
-        if (Interlocked.Exchange(ref _isDisposed, 1) != 0)
-        {
-            return;
-        }
-
+        lock (_sync) _disposed = true;
         await StopAsync().ConfigureAwait(false);
-        _devicesLock.Dispose();
     }
-
-    private async Task SendAnnouncementAsync(CancellationToken cancellationToken)
-    {
-        UdpClient? udpClient;
-        _devicesLock.EnterReadLock();
-        try
-        {
-            if (!_isRunning)
-            {
-                return;
-            }
-
-            udpClient = _udpClient;
-            if (udpClient is null)
-            {
-                return;
-            }
-        }
-        finally
-        {
-            _devicesLock.ExitReadLock();
-        }
-
-        try
-        {
-            var message = new DiscoveryMessage
-            {
-                Type = DiscoveryMessageType.Announcement,
-                DeviceId = _localDevice.Id,
-                DeviceName = _localDevice.Name,
-                TcpPort = _localDevice.Port,
-                Version = DiscoveryProtocolConstants.ProtocolVersion
-            };
-
-            var json = JsonSerializer.Serialize(message);
-            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
-
-            if (bytes.Length > DiscoveryProtocolConstants.MaxDiscoveryPacketSize)
-            {
-                return; // Silently drop oversized packet
-            }
-
-            var broadcastEndpoint = new IPEndPoint(IPAddress.Broadcast, DiscoveryUdpPort);
-            await udpClient.SendAsync(bytes, broadcastEndpoint, cancellationToken).ConfigureAwait(false);
-        }
-        catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-        }
-        catch
-        {
-            // Network errors are expected; silently continue
-        }
-    }
-
-    private async Task ReceiveLoopAsync(UdpClient udpClient, CancellationToken cancellationToken)
-    {
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    var result = await udpClient.ReceiveAsync(cancellationToken).ConfigureAwait(false);
-                    ProcessDiscoveryPacket(result.Buffer, result.RemoteEndPoint);
-                }
-                catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch
-                {
-                    // Network errors are expected; continue receiving
-                }
-            }
-        }
-        finally
-        {
-            _devicesLock.EnterWriteLock();
-            try
-            {
-                _receiveLoopTask = null;
-            }
-            finally
-            {
-                _devicesLock.ExitWriteLock();
-            }
-        }
-    }
-
-    private void ProcessDiscoveryPacket(byte[] packetData, IPEndPoint remoteEndpoint)
-    {
-        try
-        {
-            if (packetData.Length > DiscoveryProtocolConstants.MaxDiscoveryPacketSize)
-            {
-                return; // Reject oversized packet
-            }
-
-            var json = System.Text.Encoding.UTF8.GetString(packetData);
-            var message = JsonSerializer.Deserialize<DiscoveryMessage>(json);
-
-            if (message is null)
-            {
-                return; // Invalid JSON
-            }
-
-            // Validate protocol version
-            if (message.Version != DiscoveryProtocolConstants.ProtocolVersion)
-            {
-                return; // Unsupported version
-            }
-
-            // Ignore our own announcements
-            if (message.DeviceId == _localDevice.Id)
-            {
-                return;
-            }
-
-            // Validate fields
-            if (string.IsNullOrWhiteSpace(message.DeviceName))
-            {
-                return;
-            }
-
-            if (message.TcpPort is < 1 or > 65535)
-            {
-                return;
-            }
-
-            ProcessValidDiscoveryMessage(message, remoteEndpoint.Address);
-        }
-        catch (JsonException)
-        {
-            // Invalid JSON; silently ignore
-        }
-        catch (Exception)
-        {
-            // Unexpected error; log but don't crash
-        }
-    }
-
-    private void ProcessValidDiscoveryMessage(DiscoveryMessage message, IPAddress senderIp)
-    {
-        _devicesLock.EnterUpgradeableReadLock();
-        try
-        {
-            if (_devices.TryGetValue(message.DeviceId, out var existingDevice))
-            {
-                // Update existing device
-                var ipChanged = !existingDevice.IpAddress.Equals(senderIp);
-                var nameChanged = existingDevice.Name != message.DeviceName;
-                var portChanged = existingDevice.Port != message.TcpPort;
-
-                if (ipChanged)
-                {
-                    existingDevice.UpdateIpAddress(senderIp);
-                }
-
-                if (nameChanged)
-                {
-                    existingDevice.UpdateName(message.DeviceName);
-                }
-
-                if (portChanged)
-                {
-                    existingDevice.UpdatePort(message.TcpPort);
-                }
-
-                // Update status if needed
-                var wasOffline = existingDevice.Status == DeviceStatus.Offline;
-                if (wasOffline)
-                {
-                    var oldStatus = existingDevice.Status;
-                    existingDevice.UpdateStatus(DeviceStatus.Online);
-                    OnDeviceStatusChanged(existingDevice, oldStatus, DeviceStatus.Online);
-                }
-                else
-                {
-                    existingDevice.RefreshLastSeen();
-                }
-            }
-            else
-            {
-                // New device discovered
-                _devicesLock.EnterWriteLock();
-                try
-                {
-                    var device = new Device(message.DeviceId, message.DeviceName, senderIp, message.TcpPort);
-                    device.UpdateStatus(DeviceStatus.Online);
-                    _devices[message.DeviceId] = device;
-                    OnDeviceDiscovered(device);
-                }
-                finally
-                {
-                    _devicesLock.ExitWriteLock();
-                }
-            }
-        }
-        finally
-        {
-            _devicesLock.ExitUpgradeableReadLock();
-        }
-    }
-
-    private async Task HeartbeatLoopAsync(UdpClient udpClient, CancellationToken cancellationToken)
-    {
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await Task.Delay(HeartbeatIntervalMs, cancellationToken).ConfigureAwait(false);
-                    await SendAnnouncementAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-            }
-        }
-        finally
-        {
-            _devicesLock.EnterWriteLock();
-            try
-            {
-                _heartbeatLoopTask = null;
-            }
-            finally
-            {
-                _devicesLock.ExitWriteLock();
-            }
-        }
-    }
-
-    private async Task ExpirationCheckLoopAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await Task.Delay(ExpirationCheckIntervalMs, cancellationToken).ConfigureAwait(false);
-                    CheckAndRemoveExpiredDevices();
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-            }
-        }
-        finally
-        {
-            _devicesLock.EnterWriteLock();
-            try
-            {
-                _expirationCheckLoopTask = null;
-            }
-            finally
-            {
-                _devicesLock.ExitWriteLock();
-            }
-        }
-    }
-
-    private void CheckAndRemoveExpiredDevices()
-    {
-        var now = DateTimeOffset.UtcNow;
-        var offlineTimeout = TimeSpan.FromMilliseconds(OfflineTimeoutMs);
-
-        _devicesLock.EnterUpgradeableReadLock();
-        try
-        {
-            var expiredDeviceIds = _devices
-                .Where(kvp => now - kvp.Value.LastSeen > offlineTimeout)
-                .Select(kvp => kvp.Key)
-                .ToList();
-
-            foreach (var deviceId in expiredDeviceIds)
-            {
-                _devicesLock.EnterWriteLock();
-                try
-                {
-                    if (_devices.TryGetValue(deviceId, out var device))
-                    {
-                        var previousStatus = device.Status;
-                        if (previousStatus != DeviceStatus.Offline)
-                        {
-                            device.UpdateStatus(DeviceStatus.Offline);
-                            OnDeviceStatusChanged(device, previousStatus, DeviceStatus.Offline);
-                        }
-
-                        // Remove after marking offline (can be adjusted if needed)
-                        _devices.Remove(deviceId);
-                        OnDeviceRemoved(deviceId);
-                    }
-                }
-                finally
-                {
-                    _devicesLock.ExitWriteLock();
-                }
-            }
-        }
-        finally
-        {
-            _devicesLock.ExitUpgradeableReadLock();
-        }
-    }
-
-    private void OnDeviceDiscovered(Device device)
-    {
-        DeviceDiscovered?.Invoke(this, new DeviceDiscoveredEventArgs(device));
-    }
-
-    private void OnDeviceStatusChanged(Device device, DeviceStatus oldStatus, DeviceStatus newStatus)
-    {
-        DeviceStatusChanged?.Invoke(this, new DeviceStatusChangedEventArgs(device, oldStatus, newStatus));
-    }
-
-    private void OnDeviceRemoved(Guid deviceId)
-    {
-        DeviceRemoved?.Invoke(this, new DeviceRemovedEventArgs(deviceId));
-    }
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }
-
-
-

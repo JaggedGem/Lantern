@@ -73,6 +73,14 @@ public sealed class ProtocolSerializer
         using (document)
         {
             var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object)
+                throw new JsonException("A protocol message must be an object.");
+            var properties = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in root.EnumerateObject())
+            {
+                if (property.Name is not ("type" or "id" or "payload") || !properties.Add(property.Name))
+                    throw new JsonException("Unknown or duplicate protocol envelope property.");
+            }
 
             if (!root.TryGetProperty("type", out var typeElement))
             {
@@ -119,7 +127,8 @@ public sealed class ProtocolSerializer
             throw new JsonException("The message type must be a number.");
         }
 
-        var value = element.GetInt32();
+        if (!element.TryGetInt32(out var value))
+            throw new JsonException("The message type must be a 32-bit integer.");
         return value switch
         {
             (int)MessageType.Hello => MessageType.Hello,

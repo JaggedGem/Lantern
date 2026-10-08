@@ -45,31 +45,31 @@ internal sealed record DiscoveryMessage
     /// Protocol version for future compatibility.
     /// </summary>
     [JsonPropertyName("v")]
-    public int Version { get; init; } = DiscoveryProtocolConstants.ProtocolVersion;
+    public required int Version { get; init; }
 
     /// <summary>
     /// Type of discovery message.
     /// </summary>
     [JsonPropertyName("t")]
-    public DiscoveryMessageType Type { get; init; }
+    public required DiscoveryMessageType Type { get; init; }
 
     /// <summary>
     /// Unique identifier of the announcing device.
     /// </summary>
     [JsonPropertyName("id")]
-    public Guid DeviceId { get; init; }
+    public required Guid DeviceId { get; init; }
 
     /// <summary>
     /// Human-readable name of the device.
     /// </summary>
     [JsonPropertyName("n")]
-    public string DeviceName { get; init; } = string.Empty;
+    public required string DeviceName { get; init; }
 
     /// <summary>
     /// TCP listening port of the device.
     /// </summary>
     [JsonPropertyName("p")]
-    public int TcpPort { get; init; }
+    public required int TcpPort { get; init; }
 }
 
 

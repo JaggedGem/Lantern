@@ -14,7 +14,7 @@ internal sealed class FramedMessageChannel : IDisposable
     private readonly int _maximumMessageSizeBytes;
     private int _isDisposed;
 
-    public FramedMessageChannel(Stream stream, ProtocolSerializer serializer, int maximumMessageSizeBytes = 1_048_576)
+    public FramedMessageChannel(Stream stream, ProtocolSerializer serializer, int maximumMessageSizeBytes = ProtocolLimits.MaximumMessageSizeBytes)
     {
         ArgumentNullException.ThrowIfNull(stream);
         ArgumentNullException.ThrowIfNull(serializer);
@@ -56,6 +56,12 @@ internal sealed class FramedMessageChannel : IDisposable
             await _stream.WriteAsync(payload, cancellationToken).ConfigureAwait(false);
             await _stream.FlushAsync(cancellationToken).ConfigureAwait(false);
         }
+        catch
+        {
+            // Once an operation owns the stream, an interruption may leave a partial frame.
+            Dispose();
+            throw;
+        }
         finally
         {
             _sendLock.Release();
@@ -96,6 +102,11 @@ internal sealed class FramedMessageChannel : IDisposable
                 ArrayPool<byte>.Shared.Return(payloadBuffer);
             }
         }
+        catch
+        {
+            Dispose();
+            throw;
+        }
         finally
         {
             _receiveLock.Release();
@@ -109,8 +120,9 @@ internal sealed class FramedMessageChannel : IDisposable
             return;
         }
 
-        _sendLock.Dispose();
-        _receiveLock.Dispose();
+        // These managed semaphores have no native handles (AvailableWaitHandle is never used).
+        // Leave them alive so active operations can release them and queued callers can
+        // acquire, observe disposal, and exit. Closing the stream unblocks active I/O.
         _stream.Dispose();
     }
 

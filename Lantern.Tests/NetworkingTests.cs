@@ -262,8 +262,15 @@ public sealed class DiscoveryTests
     public void LocalDeviceIdentityProvider_GeneratesAndPersistsDeviceId()
     {
         // This test verifies that a device ID is generated and could be persisted
-        var id1 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId();
-        var id2 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId();
+        var directory = Path.Combine(Path.GetTempPath(), "lantern-identity-" + Guid.NewGuid());
+        var path = Path.Combine(directory, "device-id.json");
+        Guid id1, id2;
+        try
+        {
+            id1 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId(path);
+            id2 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId(path);
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
 
         // Both calls should return the same ID (persistence working)
         Assert.Equal(id1, id2);
@@ -336,7 +343,7 @@ public sealed class DiscoveryTests
     }
 
     [Fact]
-    public void Device_UpdateStatusRefreshesLastSeen()
+    public void Device_UpdateStatusDoesNotClaimAnObservation()
     {
         var device = new Device(Guid.NewGuid(), "Test", IPAddress.Loopback, 5000);
         var initialLastSeen = device.LastSeen;
@@ -345,7 +352,7 @@ public sealed class DiscoveryTests
         device.UpdateStatus(DeviceStatus.Online);
 
         Assert.Equal(DeviceStatus.Online, device.Status);
-        Assert.True(device.LastSeen > initialLastSeen);
+        Assert.Equal(initialLastSeen, device.LastSeen);
     }
 
     [Fact]
@@ -444,7 +451,7 @@ public sealed class DiscoveryTests
             "ProcessDiscoveryPacket",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        if (processMethod != null)
+        Assert.NotNull(processMethod);
         {
             processMethod.Invoke(discovery, new object[] { bytes, new System.Net.IPEndPoint(IPAddress.Loopback, 12345) });
         }
@@ -468,7 +475,7 @@ public sealed class DiscoveryTests
             "ProcessDiscoveryPacket",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        if (processMethod != null)
+        Assert.NotNull(processMethod);
         {
             // Test invalid JSON
             var invalidJson = System.Text.Encoding.UTF8.GetBytes("not-json");
@@ -551,7 +558,7 @@ public sealed class DiscoveryTests
             "ProcessDiscoveryPacket",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        if (processMethod != null)
+        Assert.NotNull(processMethod);
         {
             processMethod.Invoke(discovery, new object[] { bytes, new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.1"), 12345) });
         }
@@ -592,7 +599,7 @@ public sealed class DiscoveryTests
             "ProcessDiscoveryPacket",
             System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
 
-        if (processMethod != null)
+        Assert.NotNull(processMethod);
         {
             processMethod.Invoke(discovery, new object[] { bytes1, new System.Net.IPEndPoint(IPAddress.Parse("192.168.1.1"), 12345) });
 

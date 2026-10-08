@@ -2,65 +2,33 @@ using System.Text.Json;
 
 namespace Lantern.Models;
 
-/// <summary>
-/// Manages persistent storage of the local device ID.
-/// Ensures the same device ID is used across application restarts.
-/// </summary>
+/// <summary>Single-writer, atomic identity storage. Storage failures are surfaced to the owner.</summary>
 internal sealed class LocalDeviceIdentityProvider
 {
-    private static readonly string DeviceIdFilePath = Path.Combine(
-        Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData),
-        "Lantern",
-        "device-id.json"
-    );
-
-    /// <summary>
-    /// Loads the persisted device ID, or generates and persists a new one if missing.
-    /// </summary>
-    public static Guid LoadOrCreateDeviceId()
+    public static Guid LoadOrCreateDeviceId(string? storagePath = null)
     {
+        var path = Path.GetFullPath(storagePath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lantern", "device-id.json"));
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        // An exclusive companion lock also coordinates different application processes.
+        using var ownership = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
+        if (File.Exists(path))
+        {
+            using var document = JsonDocument.Parse(File.ReadAllBytes(path));
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty("deviceId", out var element)
+                || element.ValueKind != JsonValueKind.String || !element.TryGetGuid(out var id) || id == Guid.Empty)
+                throw new InvalidDataException("The persisted device identity is invalid; repair it explicitly rather than silently replacing it.");
+            return id;
+        }
+        var newId = Guid.NewGuid();
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try
         {
-            if (File.Exists(DeviceIdFilePath))
-            {
-                var json = File.ReadAllText(DeviceIdFilePath);
-                var document = JsonDocument.Parse(json);
-                if (document.RootElement.TryGetProperty("deviceId", out var idElement) &&
-                    idElement.TryGetGuid(out var id))
-                {
-                    return id;
-                }
-            }
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new { deviceId = newId }));
+            File.Move(temporary, path, overwrite: false);
         }
-        catch
-        {
-            // If reading fails, generate a new ID
-        }
-
-        // Generate and persist a new ID
-        var newId = Guid.NewGuid();
-        PersistDeviceId(newId);
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
         return newId;
     }
-
-    private static void PersistDeviceId(Guid deviceId)
-    {
-        try
-        {
-            var directory = Path.GetDirectoryName(DeviceIdFilePath);
-            if (!string.IsNullOrEmpty(directory) && !Directory.Exists(directory))
-            {
-                Directory.CreateDirectory(directory);
-            }
-
-            var json = JsonSerializer.Serialize(new { deviceId });
-            File.WriteAllText(DeviceIdFilePath, json);
-        }
-        catch
-        {
-            // Silently fail - if we can't persist, we'll just generate a new ID next time
-            // This is acceptable for a local application
-        }
-    }
 }
-

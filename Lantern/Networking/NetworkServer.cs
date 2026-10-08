@@ -1,187 +1,121 @@
-﻿using System.Net;
+using System.Net;
 using System.Net.Sockets;
 using Lantern.Networking.Protocol;
 
 namespace Lantern.Networking;
 
+/// <summary>Accepted connections belong to the subscriber after a successful event handoff.</summary>
 public sealed class NetworkServer : IDisposable, IAsyncDisposable
 {
     private readonly object _syncRoot = new();
-    private readonly int _configuredPort;
-    private readonly ProtocolSerializer _protocolSerializer = new();
+    private readonly ProtocolSerializer _serializer = new();
     private TcpListener? _listener;
-    private CancellationTokenSource? _shutdownSource;
-    private Task? _acceptLoopTask;
-    private bool _isRunning;
+    private CancellationTokenSource? _shutdown;
+    private Task? _acceptLoop;
+    private Task? _stopTask;
+    private int? _listeningPort;
+    private bool _disposed;
 
     public NetworkServer(int port)
     {
-        if (port is < 0 or > IPEndPoint.MaxPort)
-        {
-            throw new ArgumentOutOfRangeException(nameof(port), port, "The port must be between 0 and 65535.");
-        }
-
-        _configuredPort = port;
+        if (port is < 0 or > IPEndPoint.MaxPort) throw new ArgumentOutOfRangeException(nameof(port));
+        Port = port;
     }
 
-    public int Port => _configuredPort;
-
-    public int? ListeningPort
-    {
-        get
-        {
-            lock (_syncRoot)
-            {
-                return _listener is null ? null : ((IPEndPoint)_listener.LocalEndpoint).Port;
-            }
-        }
-    }
-
-    public bool IsRunning
-    {
-        get
-        {
-            lock (_syncRoot)
-            {
-                return _isRunning;
-            }
-        }
-    }
-
+    public int Port { get; }
+    public int? ListeningPort { get { lock (_syncRoot) return _listeningPort; } }
+    public bool IsRunning { get { lock (_syncRoot) return _listener != null && _stopTask == null && _acceptLoop?.IsCompleted == false; } }
+    /// <summary>Allows the owner to observe unexpected listener/subscriber failures.</summary>
+    public Task Completion { get { lock (_syncRoot) return _acceptLoop ?? Task.CompletedTask; } }
     public event EventHandler<ConnectionAcceptedEventArgs>? ConnectionAccepted;
 
+    /// <summary>The token cancels startup, not the server lifetime. StopAsync drains that lifetime.</summary>
     public Task StartAsync(CancellationToken cancellationToken = default)
     {
         cancellationToken.ThrowIfCancellationRequested();
-
         lock (_syncRoot)
         {
-            if (_isRunning)
-            {
-                throw new InvalidOperationException("The network server is already running.");
-            }
-
-            var listener = new TcpListener(IPAddress.Any, _configuredPort);
-            var shutdownSource = new CancellationTokenSource();
-
-            try
-            {
-                listener.Start();
-            }
-            catch
-            {
-                shutdownSource.Dispose();
-                listener.Dispose();
-                throw;
-            }
-
+            ObjectDisposedException.ThrowIf(_disposed, this);
+            if (_listener != null) throw new InvalidOperationException("The server is running or stopping; await StopAsync before restarting.");
+            var listener = new TcpListener(IPAddress.Any, Port);
+            try { listener.Start(); }
+            catch { listener.Dispose(); throw; }
             _listener = listener;
-            _shutdownSource = shutdownSource;
-            _isRunning = true;
-            _acceptLoopTask = AcceptConnectionsAsync(listener, shutdownSource);
+            _listeningPort = ((IPEndPoint)listener.LocalEndpoint).Port;
+            _shutdown = new CancellationTokenSource();
+            _stopTask = null;
+            _acceptLoop = AcceptAsync(listener, _shutdown.Token);
         }
-
         return Task.CompletedTask;
     }
 
-    public async Task StopAsync()
+    public Task StopAsync()
     {
-        Task? acceptLoopTask;
-        CancellationTokenSource? shutdownSource;
-        TcpListener? listener;
-
         lock (_syncRoot)
         {
-            if (!_isRunning)
-            {
-                return;
-            }
-
-            _isRunning = false;
-            acceptLoopTask = _acceptLoopTask;
-            shutdownSource = _shutdownSource;
-            listener = _listener;
-            _acceptLoopTask = null;
-            _shutdownSource = null;
-            _listener = null;
+            if (_listener == null) return Task.CompletedTask;
+            _listeningPort = null;
+            return _stopTask ??= StopCoreAsync(_listener, _shutdown!, _acceptLoop!);
         }
+    }
 
+    private async Task StopCoreAsync(TcpListener listener, CancellationTokenSource shutdown, Task loop)
+    {
+        await Task.Yield();
         try
         {
-            shutdownSource?.Cancel();
-            listener?.Stop();
-
-            if (acceptLoopTask is not null)
-            {
-                await acceptLoopTask.ConfigureAwait(false);
-            }
-        }
-        catch (OperationCanceledException) when (shutdownSource?.IsCancellationRequested == true)
-        {
-        }
-        catch (ObjectDisposedException) when (shutdownSource?.IsCancellationRequested == true)
-        {
+            shutdown.Cancel();
+            listener.Stop();
+            await loop.ConfigureAwait(false);
         }
         finally
         {
-            shutdownSource?.Dispose();
-            listener?.Dispose();
+            listener.Dispose();
+            shutdown.Dispose();
+            lock (_syncRoot)
+            {
+                _listener = null;
+                _shutdown = null;
+                _acceptLoop = null;
+                _stopTask = null;
+            }
         }
+    }
+
+    private async Task AcceptAsync(TcpListener listener, CancellationToken token)
+    {
+        await Task.Yield(); // Never run application callbacks under the lifecycle lock.
+        try
+        {
+            while (true)
+            {
+                var client = await listener.AcceptTcpClientAsync(token).ConfigureAwait(false);
+                Connection? connection = null;
+                try
+                {
+                    connection = new Connection(client, _serializer);
+                    var handler = ConnectionAccepted;
+                    if (handler == null) connection.Dispose();
+                    else handler(this, new ConnectionAcceptedEventArgs(connection));
+                }
+                catch
+                {
+                    if (connection != null) connection.Dispose();
+                    else client.Dispose();
+                    throw;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested) { }
+        catch (ObjectDisposedException) when (token.IsCancellationRequested) { }
+        catch (SocketException) when (token.IsCancellationRequested) { }
+        finally { listener.Stop(); }
     }
 
     public async ValueTask DisposeAsync()
     {
+        lock (_syncRoot) _disposed = true;
         await StopAsync().ConfigureAwait(false);
     }
-
-    public void Dispose()
-    {
-        StopAsync().GetAwaiter().GetResult();
-    }
-
-    private async Task AcceptConnectionsAsync(TcpListener listener, CancellationTokenSource shutdownSource)
-    {
-        var cancellationToken = shutdownSource.Token;
-
-        try
-        {
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                TcpClient client;
-
-                try
-                {
-                    client = await listener.AcceptTcpClientAsync(cancellationToken).ConfigureAwait(false);
-                }
-                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-                catch (ObjectDisposedException) when (cancellationToken.IsCancellationRequested)
-                {
-                    break;
-                }
-
-                client.NoDelay = true;
-                var connection = new Connection(client, _protocolSerializer);
-                ConnectionAccepted?.Invoke(this, new ConnectionAcceptedEventArgs(connection));
-            }
-        }
-        finally
-        {
-            lock (_syncRoot)
-            {
-                if (ReferenceEquals(_listener, listener))
-                {
-                    _isRunning = false;
-                    _listener = null;
-                    _shutdownSource = null;
-                    _acceptLoopTask = null;
-                }
-            }
-
-            listener.Stop();
-            shutdownSource.Dispose();
-        }
-    }
+    public void Dispose() => DisposeAsync().AsTask().GetAwaiter().GetResult();
 }

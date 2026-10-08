@@ -47,8 +47,8 @@ public sealed class Connection : IDisposable, IAsyncDisposable
             return;
         }
 
-        _channel.Dispose();
-        _client.Dispose();
+        try { _channel.Dispose(); }
+        finally { _client.Dispose(); }
     }
 
     public ValueTask DisposeAsync()

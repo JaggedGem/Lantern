@@ -30,6 +30,8 @@ public class LocalDevice
             throw new ArgumentOutOfRangeException(nameof(port), port, "The port must be between 1 and 65535.");
         }
 
+        if (id == Guid.Empty) throw new ArgumentException("The device ID cannot be empty.", nameof(id));
+        if (name.Length > 128 || name.Any(char.IsControl)) throw new ArgumentException("Device names must be at most 128 characters.", nameof(name));
         Id = id;
         Name = name;
         Port = port;
