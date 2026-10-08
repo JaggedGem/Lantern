@@ -9,6 +9,7 @@ public sealed class TransferFileTests
     [InlineData("photo.jpg", "photo.jpg")]
     [InlineData("Trip/day-1/photo.jpg", "photo.jpg")]
     [InlineData("旅行/фото.png", "фото.png")]
+    [InlineData("旅行/📷.png", "📷.png")]
     [InlineData(".gitignore", ".gitignore")]
     [InlineData("COM10.txt", "COM10.txt")]
     [InlineData("notes..txt", "notes..txt")]
@@ -79,6 +80,8 @@ public sealed class TransferFileTests
     [InlineData("LPT²")]
     [InlineData("LPT³.txt")]
     [InlineData("CON .txt")]
+    [InlineData("CONIN$")]
+    [InlineData("conout$.txt")]
     [InlineData("NUL/child.txt")]
     public void RejectsInvalidWindowsRelativePaths(string path)
         => Assert.Throws<ArgumentException>(() => new TransferFile(Guid.NewGuid(), path, 1));
@@ -90,6 +93,12 @@ public sealed class TransferFileTests
         Assert.Throws<ArgumentException>(() => new TransferFile(Guid.Empty, "file.txt", 0));
         Assert.Throws<ArgumentOutOfRangeException>(() => new TransferFile(Guid.NewGuid(), "file.txt", -1));
     }
+
+    [Theory]
+    [InlineData(0xD800)]
+    [InlineData(0xDC00)]
+    public void RejectsUnpairedUnicodeSurrogates(int codePoint)
+        => Assert.Throws<ArgumentException>(() => new TransferFile(Guid.NewGuid(), $"file{(char)codePoint}.txt", 0));
 
     [Theory]
     [InlineData(-1)]

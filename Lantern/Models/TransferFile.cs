@@ -32,10 +32,17 @@ public sealed class TransferFile
         if (segment.Length == 0 || segment is "." or ".." || segment[^1] is '.' or ' ')
             throw new ArgumentException("Paths must contain nonempty relative Windows filename segments.", parameterName);
 
-        foreach (var character in segment)
+        for (var index = 0; index < segment.Length; index++)
         {
+            var character = segment[index];
             if (char.IsControl(character) || character is '<' or '>' or ':' or '"' or '\\' or '|' or '?' or '*')
                 throw new ArgumentException("The relative path contains an invalid Windows filename character.", parameterName);
+            if (char.IsSurrogate(character))
+            {
+                if (!char.IsHighSurrogate(character) || index + 1 >= segment.Length || !char.IsLowSurrogate(segment[index + 1]))
+                    throw new ArgumentException("The relative path must contain valid Unicode.", parameterName);
+                index++;
+            }
         }
 
         // Windows device names remain reserved when followed by an extension.
@@ -44,6 +51,8 @@ public sealed class TransferFile
             || stem.Equals("PRN", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("AUX", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("NUL", StringComparison.OrdinalIgnoreCase)
+            || stem.Equals("CONIN$", StringComparison.OrdinalIgnoreCase)
+            || stem.Equals("CONOUT$", StringComparison.OrdinalIgnoreCase)
             || IsNumberedDevice(stem))
             throw new ArgumentException("The relative path contains a reserved Windows device name.", parameterName);
     }
