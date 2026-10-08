@@ -25,7 +25,7 @@ Every transition returns a new Transfer. Assign that value to the coordinator's 
 
 Use MarkConnecting, MarkWaitingForAcceptance, Start, ReportProgress, Complete, Cancel, Reject and Fail. Illegal transitions throw InvalidOperationException. Invalid IDs, manifests, progress bounds, failure data and timestamps throw ArgumentException-family exceptions.
 
-Progress is cumulative, cannot decrease or exceed TotalBytes, and is allowed only while Transferring. Reaching TotalBytes does not automatically imply completion. Complete requires the exact total and must be called explicitly after the future coordinator's completion checks. Zero-byte operations still require acceptance/start. Cancelled/Failed versions preserve partial bytes; only Failed carries TransferError. The error contains a defined TransferFailureKind and a nonempty description, without retaining Exception objects.
+Progress is cumulative, cannot decrease or exceed TotalBytes, and is allowed only while Transferring. Reaching TotalBytes does not automatically imply completion. Complete requires the exact total and must be called explicitly after the coordinator's completion checks. Zero-byte operations still require acceptance/start. Cancelled/Failed versions preserve partial bytes; only Failed carries TransferError. The error contains a defined TransferFailureKind and a nonempty description, without retaining Exception objects.
 
 CreatedAt, StartedAt and FinishedAt are UTC. Callers supply event times. StartedAt is set only when data transfer starts; FinishedAt represents any terminal outcome, including rejection before start. Event times cannot precede creation or, after start, StartedAt. No model contains clocks, timers, cancellation tokens, handlers or UI events.
 
@@ -58,16 +58,16 @@ incoming = incoming.ReportProgress(4096).Complete(now);
 
 ## Coordinator and Phase 4 boundary
 
-Immutability protects snapshots, but callers can still lose updates if several tasks independently replace the current version. A future TransferManager must own and serialize updates. Resolve discovered endpoints when connecting instead of retaining mutable Device objects in Transfer. Keep source file-ID → local-path mappings and receiver destination paths in the file-transfer implementation.
+Immutability protects snapshots, but several independent writers could still lose updates. The Phase 4 TransferManager owns and serializes updates, keeps local path mappings separate from metadata, and resolves discovered endpoints through the headless application API.
 
-Relative-path validation is a metadata constraint, not proof that a filesystem destination is safe. Phase 4 must enforce destination containment and handle reparse points, overwrite policy, real filename/length limits, source changes and cleanup. It must also define bounded wire manifests and the transport for file bytes. Do not write raw bytes into the current JSON message stream without a protocol.
+Relative-path validation alone does not establish filesystem safety. Phase 4 adds destination containment, reparse checks, fresh staging directories, no-overwrite publication, source-change detection, bounded manifests/chunks and cleanup. See `FILE_TRANSFERS.md` for implemented guarantees and platform verification boundaries.
 
-The Completed model state is not evidence of disk writes or hash verification. Phase 4 gates it on actual completion/size checks; Phase 7 will add integrity verification. Rejection/cancellation state does not implement network rejection messages or cancellation of real I/O.
+Completed is an explicit domain state. Phase 4 gates it on actual byte counts, completion markers and publication; the sender additionally requires acknowledgment. Phase 7 will add production hash verification. The domain itself neither moves bytes nor cancels I/O.
 
 ## Validation
 
 There are 208 transfer-domain test cases covering metadata/path safety, Unicode, large sizes, manifest ownership/collisions, total overflow, peer identity, all documented lifecycle edges, invalid transitions, progress, timestamps and failure outcomes. They use no file fixtures, discovery sockets or sleeps.
 
-The 32 existing networking/discovery tests are retained. Discovery tests now share one nonparallel xUnit collection because they bind the same fixed UDP port; other test collections can still run in parallel. This fixes test-port collisions, not the production Phase 1–2 defects recorded in the review.
+The 32 existing networking/discovery tests are retained. Discovery tests now share one nonparallel xUnit collection because they bind the same fixed UDP port; other test collections can still run in parallel. Later prerequisite commits separately repair the production transport/discovery findings; see the review implementation update.
 
 On Windows, run `dotnet build Lantern.sln` and `dotnet test Lantern.sln`. In this Linux workspace, the original solution was cross-built with EnableWindowsTargeting and model/backend tests ran through the pre-existing source-linked net10.0 test harness. Windows runtime and physical-LAN behavior remain unverified.

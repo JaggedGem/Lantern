@@ -4,7 +4,11 @@ Review date: 2026-10-08. Baseline commit: `ac5bd0bb096566e5fbec07bd021ca28d6e914
 
 ## Subsequent implementation update
 
-Phase 3 was subsequently implemented; see `TRANSFER_DOMAIN.md`. The shared-port collection-isolation part of D09 is repaired: discovery tests now run in one nonparallel xUnit collection, and all 240 current tests pass with default settings in the source-linked harness. The other production findings below remain open. The original review observations and TRX evidence remain historical records of the reviewed baseline.
+Phases 3 and 4 are subsequently implemented. Prerequisite commits `023921b`, `43d09dc` and `f011971` repair framing/lifecycle ownership, malformed envelopes, retained offline presence, detached snapshots, callback locking, announcement validation, stable identity storage, supervised loops and directed IPv4 broadcasts. Shared-port test collection isolation is also repaired. Phase 4 defines transfer handshake identity/version responsibilities and centralizes protocol limits; IPv6 remains outside the current IPv4 contract.
+
+All 299 current backend tests pass with default settings in the source-linked harness, including real transfer and application-startup checks. Current discovery summaries/checklists distinguish code coverage from field verification. Windows runtime and physical two-machine/multi-adapter LAN checks remain open. Read `PHASE_PROGRESS.md` and `FILE_TRANSFERS.md` for current status.
+
+Everything below records the **original review baseline**. Source locations, verdicts and TRX/probe evidence are preserved as historical observations, rather than assertions that repaired defects still exist.
 
 ## Verdict
 

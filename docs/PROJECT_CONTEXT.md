@@ -1,6 +1,6 @@
 # Lantern: durable project context
 
-Recorded: 2026-10-08. Reviewed source revision: `ac5bd0bb096566e5fbec07bd021ca28d6e914415`.
+Updated: 2026-10-08. Original review baseline: `ac5bd0bb096566e5fbec07bd021ca28d6e914415`.
 
 ## How to resume work
 
@@ -10,7 +10,7 @@ Recorded: 2026-10-08. Reviewed source revision: `ac5bd0bb096566e5fbec07bd021ca28
 4. Read `PHASE_3_PLAN.md` before implementing transfer-domain work.
 5. Inspect current code and changes; these documents describe the reviewed revision, not a permanent claim about future code.
 
-The latest user instructions authorize Phase 3 implementation and commits at appropriate milestones. Phase 3 is now implemented: immutable metadata and transfer state, manifest validation, explicit lifecycle methods, progress/timestamps, typed errors and meaningful tests. The original review itself did not change production source; the subsequent Phase 3 work did. See `TRANSFER_DOMAIN.md` for the implemented API and phase boundary.
+The latest user instructions authorize continued implementation, milestone commits, and pushing all completed commits at the end to origin branch `work`. Phases 3 and 4 are implemented. Phase 4 also repairs the earlier transport/discovery prerequisites. See `PHASE_PROGRESS.md` for completed phases and remaining verification, `TRANSFER_DOMAIN.md` for the pure models, and `FILE_TRANSFERS.md` for application composition, transfer APIs and manual Windows LAN checks. Phase 5's WinForms UI is the next implementation milestone.
 
 These are repository files, not account-wide ChatGPT memory. Future chats using this repository can load them through `AGENTS.md`. A separate chat without this repository will need the context files supplied again.
 
@@ -30,8 +30,8 @@ Core distinctions:
 | Connection | Reliable framed message transport; not message semantics |
 | Message / ProtocolSerializer | Typed protocol information / conversion to and from bytes |
 | Transfer | One file operation's identity, participants, metadata and state |
-| TransferManager | Future transfer coordination and lifecycle ownership |
-| FileSender / FileReceiver | Future streaming file I/O and byte transmission |
+| TransferManager | Negotiation, serialized transfer state, cancellation and connection ownership |
+| FileSender / FileReceiver | Bounded file streaming and staged receiver publication |
 | UI | Presentation and user input through application APIs |
 
 Discovery is not trust. UDP and TCP input are untrusted. Keep maximum message/packet sizes, validation, path safety, and cancellation explicit. Metadata models must never open files or sockets. Use established encryption and authentication in the security phase.
@@ -52,20 +52,19 @@ Some older Phase 2 documents incorrectly label later phases; use this order and 
 
 ## Verified repository state
 
-Repository root: `/workspace/Lantern`; origin: `https://github.com/JaggedGem/Lantern.git`. No remote changes were made. The solution contains `Lantern`, `Lantern.Tests`, and `Lantern.Harness`. The main application and tests target `net10.0-windows`; the application enables WinForms. Nullable references and implicit usings are enabled. Tests use xUnit.
+Repository root: `/workspace/Lantern`; origin: `https://github.com/JaggedGem/Lantern.git`. Earlier Phase 3 commits were pushed to `work`; subsequent milestone commits are authorized for the same destination. The solution contains `Lantern`, `Lantern.Tests`, and `Lantern.Harness`. The main application and tests target `net10.0-windows`; the application enables WinForms. Nullable references and implicit usings are enabled. Tests use xUnit.
 
-- `Networking/Connection.cs` wraps a `TcpClient`; the internal `FramedMessageChannel` owns 4-byte big-endian framing, exact reads, send and receive serialization, pooled receive buffers, and a default 1 MiB message cap.
-- `NetworkServer` listens on IPv4 Any, accepts asynchronously, exposes accepted connections through an event, and supports start/stop. `NetworkClient` supports async connection and cancellation.
-- `Networking/Protocol` contains one `Message` envelope, a nonempty `MessageId` value type, `Hello` / `Error` message types, typed payloads, and a JSON serializer. Preserve this working envelope/payload design instead of replacing it solely to match a conceptual sketch.
-- `Networking/Discovery` contains JSON UDP announcements, ID-based deduplication and self-filtering, source-endpoint IP selection, heartbeat and expiration tasks. UDP port 52845; heartbeat 3 seconds; offline threshold 15 seconds; expiration scan 5 seconds; packet limit 4096 bytes; protocol version 1.
-- `Models/Device` is currently mutable. `LocalDevice` contains advertised identity, name and TCP port. `LocalDeviceIdentityProvider` stores a JSON ID under the platform application-data directory, intended as `%APPDATA%\Lantern\device-id.json` on Windows.
-- WinForms is an empty shell; `Program` and `MainWindow` do not start networking/discovery. The console harness demonstrates a manual Hello exchange.
-- Phase 3 now includes immutable `TransferFile` and `Transfer` models, direction/status enums and typed errors under `Lantern.Models`. TransferRequest and the empty FileSender placeholder were removed after confirming there were no live callers. No file movement, transfer manager or transfer protocol messages have been implemented.
+- TCP framing has a centralized 1 MiB cap. Interrupted frame operations close the channel; queued/pre-cancelled operations and server shutdown have explicit ownership and regression coverage.
+- Protocol serialization strictly validates envelopes and supports Hello/Error plus typed transfer negotiation, chunks, per-file completion, overall completion and acknowledgments. Transfer handshakes require matching claimed installation IDs and protocol version; this is not authentication.
+- Discovery sends directed IPv4 broadcasts across eligible interfaces. Defaults: UDP 52845, heartbeat 3 seconds, offline threshold 15 seconds, expiration scan 5 seconds, packet limit 4096 bytes, 256 retained peers. Offline entries retain their actual last-seen time. Snapshots are detached, callbacks occur outside locks, metadata changes notify observers, and lifecycle tasks are supervised.
+- Persistent identity validates storage and uses exclusive locking plus atomic creation. Persistence failures are surfaced instead of silently replacing identity.
+- Immutable Phase 3 models contain only metadata/state. The Phase 4 `Transfers` namespace owns local source paths, negotiation, bounded streaming, progress, timeouts and staged destination cleanup. No existing destination files are overwritten; completion requires all declared bytes and markers, atomic publication and sender acknowledgment.
+- `Lantern.Application.LanternApplication` composes stable identity, TCP startup, discovery of the actual bound endpoint, transfers and orderly shutdown. The console harness offers explicit send/receive commands in addition to Hello testing.
+- WinForms remains an empty shell. Phase 5 will connect the headless application to the UI. Folder enumeration, production hashes, encryption, persistent history and resume are later work.
 
 ## Review verdict and evidence
 
-Phase 1 has a useful foundation but needs lifecycle/framing hardening. Phase 2 is implemented in part and does **not** satisfy its definition of done. Important issues: offline peers are immediately deleted; last-seen is refreshed when marking offline; discovery returns internal mutable objects and calls subscribers under locks; packet validation omits type, required-field checks, nonempty IDs and name bounds; persistence failures silently lose stable identity; interface handling is incomplete; metadata updates lack notifications; broad catches hide errors.
-
+The original review found lifecycle/framing, discovery ownership, retained presence, validation, identity and interface-handling defects. Subsequent prerequisite commits repair those behaviors and add automated regression coverage. The review's source locations and probe results remain historical evidence, not current defect claims. Windows runtime, physical two-machine LAN and multi-adapter field gates remain open.
 Verified at the original review baseline, before Phase 3:
 
 - Original Windows-targeted solution cross-build succeeded on Linux with 0 reported warnings/errors (incremental build).
@@ -78,10 +77,14 @@ See the review for source locations, severity, evidence and repair gates. Older 
 
 ## Implemented Phase 3
 
-The implemented pure domain provides immutable file metadata and transfer versions, stable transfer/file/participant IDs, direction/status enums, explicit legal transitions, checked total sizes, cumulative byte progress, UTC timestamps and typed errors. The existing namespace style (`Lantern.Models`) is preserved. Models hold no live Device, Connection, sender implementations or local absolute paths. Logical paths follow host-independent Windows filename constraints and reject malformed Unicode. File selection and absolute source/destination mapping remain Phase 4 work.
+The implemented pure domain provides immutable file metadata and transfer versions, stable transfer/file/participant IDs, direction/status enums, explicit legal transitions, checked total sizes, cumulative byte progress, UTC timestamps and typed errors. The existing namespace style (`Lantern.Models`) is preserved. Models hold no live Device, Connection, sender implementations or local absolute paths. Logical paths follow host-independent Windows filename constraints and reject malformed Unicode. File selection and absolute source/destination mapping now belong to the separate Phase 4 implementation.
 
-Transition APIs return a new immutable Transfer; a future single-owner coordinator must sequence updates. See `PHASE_3_PLAN.md` for the completed checklist and `TRANSFER_DOMAIN.md` for actual method signatures, legal transitions and examples.
+Transition APIs return a new immutable Transfer; TransferManager sequences updates as their single owner. See `PHASE_3_PLAN.md` for the completed checklist and `TRANSFER_DOMAIN.md` for actual method signatures, legal transitions and examples.
 
 Phase 3 validation: 208 domain test cases pass. Together with the original 32 networking/discovery tests, all 240 tests pass with default collection settings in the Linux source-linked harness. Discovery-related test classes now share a nonparallel xUnit collection, removing the external global-runsettings workaround; other test collections remain parallel. The Windows-targeted solution cross-builds successfully. Windows runtime behavior remains unverified.
 
-The production Phase 1–2 repair findings remain open. The test-port collision part of D09 was fixed; discovery ownership, input validation, retained offline presence, stable identity failures, lifecycle races and physical-LAN checks still require their own repair work before Phase 4 live transfer. Do not confuse passing Phase 3 tests with those repairs or with working file transfer.
+## Implemented Phase 4 and current validation
+
+TransferManager supports acceptance/rejection, bounded manifests and chunks, local cancellation, connection/request/inactivity deadlines, immutable progress events, failure classification and supervised shutdown. FileReceiver writes to a fresh staging directory and publishes a new `Lantern-<transfer-id>` directory only after all files complete. A lost final acknowledgment can leave a completed receiver and failed sender; see `FILE_TRANSFERS.md` for this and cleanup/platform boundaries.
+
+All 299 backend test cases pass with default collection settings: 208 domain, 32 original networking/discovery, 20 reliability, 14 transfer serialization, 22 file-transfer integration and 3 application-startup cases. The original Windows-targeted solution and Linux source-linked CLI harness build with zero warnings/errors. Automated checks include real TCP file transfers and UDP endpoint-to-TCP connectivity on the managed machine. They do not establish physical-LAN, Windows reparse-point or WinForms behavior. Production SHA-256 exchange remains Phase 7 work.

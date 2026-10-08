@@ -2,7 +2,7 @@
 
 Before working on this repository, read `docs/PROJECT_CONTEXT.md` and the sections of `docs/PROJECT_SPECIFICATION.md` relevant to the requested phase. The specification is the user's full, canonical architecture and roadmap; the existing code establishes what actually exists.
 
-The latest review is `docs/PHASE_1_2_REVIEW.md`. Phase 3 is implemented; its completed plan is `docs/PHASE_3_PLAN.md` and its API guide is `docs/TRANSFER_DOMAIN.md`. The earlier-phase review findings remain open except for test-port collection isolation. Do not treat a documented repair recommendation as an implemented fix. Update project context when verified behavior or accepted decisions change.
+The historical review is `docs/PHASE_1_2_REVIEW.md`; its implementation update records subsequent repairs. Phases 3 and 4 are implemented. Read `docs/PHASE_PROGRESS.md` for phase status, `docs/TRANSFER_DOMAIN.md` for domain APIs, and `docs/FILE_TRANSFERS.md` for the actual transfer backend and platform validation gates. Update project context when verified behavior or accepted decisions change. Windows runtime and physical-LAN verification remain pending.
 
 Preserve the distinction between Device, Connection, Message, and Transfer. Keep UI, discovery, transport framing, protocol serialization, and file I/O in their own responsibilities. Build on correct existing code. Stay within the phase the user requests; Phase 3 is transfer-domain modeling, Phase 4 is actual file movement, and Phase 5 is WinForms UI.
 
