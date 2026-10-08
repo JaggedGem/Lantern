@@ -97,6 +97,19 @@ public sealed class NetworkingReliabilityTests
     }
 
     [Fact]
+    public async Task ImmediateStopAndRestartAlwaysDrainTheAcceptLoop()
+    {
+        await using var server = new NetworkServer(0);
+        for (var attempt = 0; attempt < 10; attempt++)
+        {
+            await server.StartAsync();
+            await server.StopAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.False(server.IsRunning);
+            Assert.Null(server.ListeningPort);
+        }
+    }
+
+    [Fact]
     public async Task ConnectionWithoutOwnerIsClosedAndServerKeepsAccepting()
     {
         await using var server = new NetworkServer(0);

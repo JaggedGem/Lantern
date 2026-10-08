@@ -87,7 +87,7 @@ public sealed class NetworkServer : IDisposable, IAsyncDisposable
         await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding); // Never run application callbacks under the lifecycle lock.
         try
         {
-            while (true)
+            while (!token.IsCancellationRequested)
             {
                 var client = await listener.AcceptTcpClientAsync(token).ConfigureAwait(false);
                 Connection? connection = null;
@@ -109,6 +109,7 @@ public sealed class NetworkServer : IDisposable, IAsyncDisposable
         catch (OperationCanceledException) when (token.IsCancellationRequested) { }
         catch (ObjectDisposedException) when (token.IsCancellationRequested) { }
         catch (SocketException) when (token.IsCancellationRequested) { }
+        catch (InvalidOperationException) when (token.IsCancellationRequested) { }
         finally { listener.Stop(); }
     }
 
