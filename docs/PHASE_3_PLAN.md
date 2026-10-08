@@ -2,7 +2,7 @@
 
 Prepared: 2026-10-08. Baseline: `ac5bd0bb096566e5fbec07bd021ca28d6e914415`.
 
-Status: proposed design and execution plan; not implemented. Read `PROJECT_SPECIFICATION.md` sections 36–41 and 80, plus `PHASE_1_2_REVIEW.md`, before implementation.
+Status: implemented on 2026-10-08. The completed checklist below and `TRANSFER_DOMAIN.md` describe the delivered domain. Validation: 208 domain cases and all 240 total tests pass through the Linux source-linked harness; the Windows-targeted solution cross-build succeeds. Production Phase 1–2 repair work remains separately tracked. Read `PROJECT_SPECIFICATION.md` sections 36–41 and 80, plus `PHASE_1_2_REVIEW.md`, before implementation.
 
 ## Outcome and phase boundary
 
@@ -45,7 +45,7 @@ Keep `Lantern.Models` for domain types and preserve working TCP/discovery/protoc
 
 The inspected revision has no production consumers of TransferRequest or FileSender beyond their own placeholder relationship. Repeat a reference search before removing anything, since the repository may have changed. `TransferFile.FilePath` and `FileHash` likewise have no live usage in this revision. If new callers exist, migrate them explicitly; do not keep an ambiguous absolute/relative path or meaningless compatibility methods merely to avoid changing placeholders.
 
-## Proposed type set
+## Implemented type set
 
 Use these concrete domain types under `Lantern/Models`:
 
@@ -70,7 +70,7 @@ Alternative: a mutable aggregate with internal methods is viable if every consum
 
 ## TransferFile contract
 
-Recommended shape:
+Implemented shape:
 
 | Property | Type | Contract |
 | --- | --- | --- |
@@ -106,7 +106,7 @@ Nested RelativePath values preserve file hierarchy, e.g. `Project/src/Main.cs` a
 
 ## Transfer contract
 
-Recommended properties:
+Implemented properties:
 
 | Property | Type | Invariant |
 | --- | --- | --- |
@@ -158,7 +158,7 @@ Every transition validates the current state and returns a new immutable Transfe
 | Transferring | Completed, Cancelled, Failed | Completion requires exact total bytes |
 | Completed / Cancelled / Failed / Rejected | None | Terminal; retries create a new transfer ID |
 
-Suggested narrow methods:
+Implemented narrow methods:
 
 - `MarkConnecting()` and `MarkWaitingForAcceptance()`.
 - `Start(startedAt)` sets StartedAt exactly once.
@@ -265,19 +265,19 @@ Use xUnit theories for the transition/path matrix. Test behavior and invariants,
 
 ## Definition of done
 
-- [ ] Transfer and file entries have stable nonempty IDs.
-- [ ] Direction and lifecycle states are explicit enums with legal transitions.
-- [ ] Source/destination are stable installation IDs, independent of IP and connections.
-- [ ] Metadata supports multiple files, zero-byte files, large sizes and nested relative paths.
-- [ ] Collections and entries cannot be mutated externally.
-- [ ] Duplicate/colliding paths and overflowing totals are rejected.
-- [ ] Byte progress, completion, timestamps and error data satisfy documented invariants.
-- [ ] Domain code performs no file/network I/O and references no forms or transfer implementations.
-- [ ] Misleading placeholder no-op acceptance methods are removed or migrated.
-- [ ] Meaningful domain tests pass through reproducible test commands.
-- [ ] Original solution builds and earlier-phase regressions are checked.
-- [ ] Implemented APIs and remaining earlier-phase gaps are recorded in project context.
-- [ ] No Phase 4+ implementation was added prematurely.
+- [x] Transfer and file entries have stable nonempty IDs.
+- [x] Direction and lifecycle states are explicit enums with legal transitions.
+- [x] Source/destination are stable installation IDs, independent of IP and connections.
+- [x] Metadata supports multiple files, zero-byte files, large sizes and nested relative paths.
+- [x] Collections and entries cannot be mutated externally.
+- [x] Duplicate/colliding paths and overflowing totals are rejected.
+- [x] Byte progress, completion, timestamps and error data satisfy documented invariants.
+- [x] Domain code performs no file/network I/O and references no forms or transfer implementations.
+- [x] Misleading placeholder no-op acceptance methods are removed or migrated.
+- [x] Meaningful domain tests pass through reproducible test commands.
+- [x] Original solution builds and earlier-phase regressions are checked.
+- [x] Implemented APIs and remaining earlier-phase gaps are recorded in project context.
+- [x] No Phase 4+ implementation was added prematurely.
 
 ## Phase 4 handoff and unresolved choices
 

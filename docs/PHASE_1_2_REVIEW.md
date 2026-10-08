@@ -2,6 +2,10 @@
 
 Review date: 2026-10-08. Baseline commit: `ac5bd0bb096566e5fbec07bd021ca28d6e914415`.
 
+## Subsequent implementation update
+
+Phase 3 was subsequently implemented; see `TRANSFER_DOMAIN.md`. The shared-port collection-isolation part of D09 is repaired: discovery tests now run in one nonparallel xUnit collection, and all 240 current tests pass with default settings in the source-linked harness. The other production findings below remain open. The original review observations and TRX evidence remain historical records of the reviewed baseline.
+
 ## Verdict
 
 The existing code is worth building on. Phase 1 has the main transport and protocol pieces; Phase 2 has discovery and presence mechanisms. Neither should currently be marked fully complete against the canonical specification. The most serious gaps are in lifecycle correctness, discovery ownership, retained offline presence, and input validation. The old Phase 2 completion documents overstate what is implemented and tested.

@@ -10,7 +10,7 @@ Recorded: 2026-10-08. Reviewed source revision: `ac5bd0bb096566e5fbec07bd021ca28
 4. Read `PHASE_3_PLAN.md` before implementing transfer-domain work.
 5. Inspect current code and changes; these documents describe the reviewed revision, not a permanent claim about future code.
 
-The latest user instruction was to preserve the project information, review everything through Phase 2, and make a comprehensive Phase 3 plan. Implementation of the plan has not been requested in this turn. Production source was not changed by the review.
+The latest user instructions authorize Phase 3 implementation and commits at appropriate milestones. Phase 3 is now implemented: immutable metadata and transfer state, manifest validation, explicit lifecycle methods, progress/timestamps, typed errors and meaningful tests. The original review itself did not change production source; the subsequent Phase 3 work did. See `TRANSFER_DOMAIN.md` for the implemented API and phase boundary.
 
 These are repository files, not account-wide ChatGPT memory. Future chats using this repository can load them through `AGENTS.md`. A separate chat without this repository will need the context files supplied again.
 
@@ -60,13 +60,13 @@ Repository root: `/workspace/Lantern`; origin: `https://github.com/JaggedGem/Lan
 - `Networking/Discovery` contains JSON UDP announcements, ID-based deduplication and self-filtering, source-endpoint IP selection, heartbeat and expiration tasks. UDP port 52845; heartbeat 3 seconds; offline threshold 15 seconds; expiration scan 5 seconds; packet limit 4096 bytes; protocol version 1.
 - `Models/Device` is currently mutable. `LocalDevice` contains advertised identity, name and TCP port. `LocalDeviceIdentityProvider` stores a JSON ID under the platform application-data directory, intended as `%APPDATA%\Lantern\device-id.json` on Windows.
 - WinForms is an empty shell; `Program` and `MainWindow` do not start networking/discovery. The console harness demonstrates a manual Hello exchange.
-- Early transfer placeholders exist: `Models/TransferFile`, `Models/TransferRequest`, and empty `Transfers/FileSender`. They are not a functioning transfer domain. `TransferRequest` currently holds a sender implementation and mutable array, with no-op acceptance methods.
+- Phase 3 now includes immutable `TransferFile` and `Transfer` models, direction/status enums and typed errors under `Lantern.Models`. TransferRequest and the empty FileSender placeholder were removed after confirming there were no live callers. No file movement, transfer manager or transfer protocol messages have been implemented.
 
 ## Review verdict and evidence
 
 Phase 1 has a useful foundation but needs lifecycle/framing hardening. Phase 2 is implemented in part and does **not** satisfy its definition of done. Important issues: offline peers are immediately deleted; last-seen is refreshed when marking offline; discovery returns internal mutable objects and calls subscribers under locks; packet validation omits type, required-field checks, nonempty IDs and name bounds; persistence failures silently lose stable identity; interface handling is incomplete; metadata updates lack notifications; broad catches hide errors.
 
-Verified on this date:
+Verified at the original review baseline, before Phase 3:
 
 - Original Windows-targeted solution cross-build succeeded on Linux with 0 reported warnings/errors (incremental build).
 - Existing tests: 32/32 passed using the pre-existing Linux source-linked harness with collection parallelism disabled.
@@ -76,8 +76,12 @@ Verified on this date:
 
 See the review for source locations, severity, evidence and repair gates. Older completion checklists and performance claims are not verification evidence.
 
-## Proposed Phase 3 direction
+## Implemented Phase 3
 
-Implement a small pure domain: immutable file metadata, transfer identity and participant IDs, direction/status enums, explicit legal transitions, checked total sizes, cumulative byte progress, timestamps, typed failure data, and tests. Preserve the existing namespace style (`Lantern.Models`) to minimize churn. Avoid storing live `Device`, `Connection`, sender implementations or local absolute paths in wire-ready metadata. Separate local file selection from logical relative paths in Phase 4.
+The implemented pure domain provides immutable file metadata and transfer versions, stable transfer/file/participant IDs, direction/status enums, explicit legal transitions, checked total sizes, cumulative byte progress, UTC timestamps and typed errors. The existing namespace style (`Lantern.Models`) is preserved. Models hold no live Device, Connection, sender implementations or local absolute paths. Logical paths follow host-independent Windows filename constraints and reject malformed Unicode. File selection and absolute source/destination mapping remain Phase 4 work.
 
-The detailed plan proposes immutable transfer versions and a future single-owner coordinator. These are recommendations awaiting implementation, not changes already made or user-approved API commitments. Do not build transport payloads, managers, senders/receivers, folder enumeration, UI, hashing or encryption in Phase 3.
+Transition APIs return a new immutable Transfer; a future single-owner coordinator must sequence updates. See `PHASE_3_PLAN.md` for the completed checklist and `TRANSFER_DOMAIN.md` for actual method signatures, legal transitions and examples.
+
+Phase 3 validation: 208 domain test cases pass. Together with the original 32 networking/discovery tests, all 240 tests pass with default collection settings in the Linux source-linked harness. Discovery-related test classes now share a nonparallel xUnit collection, removing the external global-runsettings workaround; other test collections remain parallel. The Windows-targeted solution cross-builds successfully. Windows runtime behavior remains unverified.
+
+The production Phase 1–2 repair findings remain open. The test-port collision part of D09 was fixed; discovery ownership, input validation, retained offline presence, stable identity failures, lifecycle races and physical-LAN checks still require their own repair work before Phase 4 live transfer. Do not confuse passing Phase 3 tests with those repairs or with working file transfer.
