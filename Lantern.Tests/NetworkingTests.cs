@@ -255,6 +255,7 @@ public sealed class NetworkingTests
     }
 }
 
+[Collection(DiscoveryTestCollection.Name)]
 public sealed class DiscoveryTests
 {
     [Fact]

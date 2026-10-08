@@ -10,6 +10,7 @@ namespace Lantern.Tests;
 /// Note: True cross-instance discovery requires different machines or network interface simulation.
 /// These tests verify the behavior under realistic conditions.
 /// </summary>
+[Collection(DiscoveryTestCollection.Name)]
 public sealed class DiscoveryIntegrationTests : IAsyncLifetime
 {
     private DeviceDiscovery? _discovery1;
