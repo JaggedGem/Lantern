@@ -14,6 +14,7 @@ public sealed class ProtocolSerializer
     {
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.General)
         {
+            RespectRequiredConstructorParameters = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
@@ -115,6 +116,13 @@ public sealed class ProtocolSerializer
             case ErrorPayload errorPayload:
                 JsonSerializer.Serialize(writer, errorPayload, typeof(ErrorPayload), _jsonOptions);
                 return;
+            case TransferRequestPayload request: JsonSerializer.Serialize(writer, request, _jsonOptions); return;
+            case TransferAcceptedPayload accepted: JsonSerializer.Serialize(writer, accepted, _jsonOptions); return;
+            case TransferRejectedPayload rejected: JsonSerializer.Serialize(writer, rejected, _jsonOptions); return;
+            case FileChunkPayload chunk: JsonSerializer.Serialize(writer, chunk, _jsonOptions); return;
+            case FileCompletePayload fileComplete: JsonSerializer.Serialize(writer, fileComplete, _jsonOptions); return;
+            case TransferCompletePayload complete: JsonSerializer.Serialize(writer, complete, _jsonOptions); return;
+            case TransferAcknowledgedPayload acknowledged: JsonSerializer.Serialize(writer, acknowledged, _jsonOptions); return;
             default:
                 throw new NotSupportedException($"Unsupported payload type '{payload.GetType().FullName}'.");
         }
@@ -133,6 +141,7 @@ public sealed class ProtocolSerializer
         {
             (int)MessageType.Hello => MessageType.Hello,
             (int)MessageType.Error => MessageType.Error,
+            >= (int)MessageType.TransferRequest and <= (int)MessageType.TransferAcknowledged => (MessageType)value,
             _ => throw new JsonException($"The message type '{value}' is not supported.")
         };
     }
@@ -154,6 +163,13 @@ public sealed class ProtocolSerializer
         {
             MessageType.Hello => DeserializePayload<HelloPayload>(payloadElement),
             MessageType.Error => DeserializePayload<ErrorPayload>(payloadElement),
+            MessageType.TransferRequest => DeserializePayload<TransferRequestPayload>(payloadElement),
+            MessageType.TransferAccepted => DeserializePayload<TransferAcceptedPayload>(payloadElement),
+            MessageType.TransferRejected => DeserializePayload<TransferRejectedPayload>(payloadElement),
+            MessageType.FileChunk => DeserializePayload<FileChunkPayload>(payloadElement),
+            MessageType.FileComplete => DeserializePayload<FileCompletePayload>(payloadElement),
+            MessageType.TransferComplete => DeserializePayload<TransferCompletePayload>(payloadElement),
+            MessageType.TransferAcknowledged => DeserializePayload<TransferAcknowledgedPayload>(payloadElement),
             _ => throw new JsonException($"The message type '{type}' is not supported.")
         };
 
