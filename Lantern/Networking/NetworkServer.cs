@@ -61,7 +61,7 @@ public sealed class NetworkServer : IDisposable, IAsyncDisposable
 
     private async Task StopCoreAsync(TcpListener listener, CancellationTokenSource shutdown, Task loop)
     {
-        await Task.Yield();
+        await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
         try
         {
             shutdown.Cancel();
@@ -84,7 +84,7 @@ public sealed class NetworkServer : IDisposable, IAsyncDisposable
 
     private async Task AcceptAsync(TcpListener listener, CancellationToken token)
     {
-        await Task.Yield(); // Never run application callbacks under the lifecycle lock.
+        await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding); // Never run application callbacks under the lifecycle lock.
         try
         {
             while (true)

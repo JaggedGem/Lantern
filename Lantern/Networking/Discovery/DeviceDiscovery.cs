@@ -112,7 +112,7 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
 
     private async Task StopCoreAsync(UdpClient socket, CancellationTokenSource shutdown, Task completion)
     {
-        await Task.Yield();
+        await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
         try { shutdown.Cancel(); socket.Dispose(); await completion.ConfigureAwait(false); }
         finally
         {
@@ -124,7 +124,7 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
 
     private async Task RunAsync(UdpClient socket, CancellationTokenSource shutdown)
     {
-        await Task.Yield();
+        await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
         var tasks = new[] { ReceiveAsync(socket, shutdown.Token), AnnounceAsync(socket, shutdown.Token), ExpireAsync(shutdown.Token) };
         await Task.WhenAny(tasks).ConfigureAwait(false);
         shutdown.Cancel();

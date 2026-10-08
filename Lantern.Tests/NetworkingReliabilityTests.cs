@@ -106,6 +106,35 @@ public sealed class NetworkingReliabilityTests
         Assert.True(server.IsRunning);
     }
 
+    [Fact]
+    public async Task SynchronousServerDisposalDoesNotCaptureTheCallersSynchronizationContext()
+    {
+        var context = new CountingContext();
+        await Task.Run(() =>
+        {
+            var previous = SynchronizationContext.Current;
+            SynchronizationContext.SetSynchronizationContext(context);
+            try
+            {
+                using var server = new NetworkServer(0);
+                server.StartAsync().GetAwaiter().GetResult();
+            }
+            finally { SynchronizationContext.SetSynchronizationContext(previous); }
+        }).WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal(0, context.Posts);
+    }
+
+    private sealed class CountingContext : SynchronizationContext
+    {
+        private int _posts;
+        public int Posts => _posts;
+        public override void Post(SendOrPostCallback callback, object? state)
+        {
+            Interlocked.Increment(ref _posts);
+            ThreadPool.QueueUserWorkItem(_ => callback(state));
+        }
+    }
+
     private sealed class PartialCancellationStream(CancellationTokenSource source) : MemoryStream(new byte[8], true)
     {
         private int _reads;
