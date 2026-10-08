@@ -6,7 +6,7 @@
     <AssemblyName>Lantern</AssemblyName>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="../../../Lantern/Models/**/*.cs" />
+    <Compile Include="../../../Lantern/Models/**/*.cs" /><Compile Include="../../../Lantern/Application/**/*.cs" />
     <Compile Include="../../../Lantern/Networking/**/*.cs" />
     <Compile Include="../../../Lantern/Transfers/**/*.cs" />
     <Compile Include="../../../Lantern/Properties/AssemblyInfo.cs" />

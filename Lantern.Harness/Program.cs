@@ -1,3 +1,6 @@
+using Lantern.Application;
+using Lantern.Models;
+using Lantern.Transfers;
 using System.Net;
 using Lantern.Networking;
 using Lantern.Networking.Protocol;
@@ -23,6 +26,8 @@ internal static class Program
             {
                 "server" => await RunServerAsync(ParsePort(args, 1)),
                 "client" => await RunClientAsync(ParseAddress(args, 2), ParsePort(args, 1)),
+                "receive" => await RunReceiverAsync(args),
+                "send" => await RunSenderAsync(args),
                 _ => PrintUsageAndFail()
             };
         }
@@ -68,6 +73,40 @@ internal static class Program
         return 0;
     }
 
+    private static async Task<int> RunReceiverAsync(string[] args)
+    {
+        if (args.Length != 2 || !Directory.Exists(args[1])) throw new ArgumentException("receive requires an existing destination folder.");
+        using var cancellation = new CancellationTokenSource();
+        ConsoleCancelEventHandler cancel = (_, e) => { e.Cancel = true; cancellation.Cancel(); };
+        Console.CancelKeyPress += cancel;
+        try
+        {
+            await using var application = new LanternApplication(Environment.MachineName);
+            application.Transfers.IncomingTransferRequested += (_, request) => request.Accept(args[1]);
+            application.Transfers.TransferChanged += (_, e) => Console.WriteLine($"{e.Transfer.Id}: {e.Transfer.Status} {e.Transfer.TransferredBytes}/{e.Transfer.TotalBytes}");
+            await application.StartAsync(cancellation.Token);
+            Console.WriteLine($"Receiving as {application.LocalDevice!.Id} on TCP port {application.LocalDevice.Port}. Press Ctrl+C to stop.");
+            try { await Task.Delay(Timeout.InfiniteTimeSpan, cancellation.Token); }
+            catch (OperationCanceledException) when (cancellation.IsCancellationRequested) { }
+            return 0;
+        }
+        finally { Console.CancelKeyPress -= cancel; }
+    }
+
+    private static async Task<int> RunSenderAsync(string[] args)
+    {
+        if (args.Length < 5 || !Guid.TryParse(args[1], out var receiverId) || receiverId == Guid.Empty)
+            throw new ArgumentException("send requires receiver ID, IPv4 address, port and one or more file paths.");
+        await using var application = new LanternApplication(Environment.MachineName);
+        await application.StartAsync();
+        application.Transfers.TransferChanged += (_, e) => Console.WriteLine($"{e.Transfer.Id}: {e.Transfer.Status} {e.Transfer.TransferredBytes}/{e.Transfer.TotalBytes}");
+        var peer = new Device(receiverId, "Selected receiver", ParseAddress(args, 2), ParsePort(args, 3));
+        var files = args.Skip(4).Select(path => TransferSourceFile.FromPath(path)).ToArray();
+        var result = await application.Transfers.SendAsync(peer, files);
+        if (result.Error != null) Console.Error.WriteLine(result.Error.Description);
+        return result.Status == TransferStatus.Completed ? 0 : 1;
+    }
+
     private static IPAddress ParseAddress(string[] args, int index)
     {
         if (args.Length <= index)
@@ -104,6 +143,8 @@ internal static class Program
         Console.WriteLine("Usage:");
         Console.WriteLine("  Lantern.Harness server <port>");
         Console.WriteLine("  Lantern.Harness client <port> [ip-address]");
+        Console.WriteLine("  Lantern.Harness receive <destination-folder>");
+        Console.WriteLine("  Lantern.Harness send <receiver-id> <ip-address> <port> <file> [file ...]");
     }
 
     private static void WriteMessage(string prefix, Message message)
