@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>Lantern</AssemblyName>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../../Lantern/Models/**/*.cs" />
+    <Compile Include="../../../Lantern/Networking/**/*.cs" />
+    <Compile Include="../../../Lantern/Transfers/**/*.cs" />
+    <Compile Include="../../../Lantern/Properties/AssemblyInfo.cs" />
+  </ItemGroup>
+</Project>

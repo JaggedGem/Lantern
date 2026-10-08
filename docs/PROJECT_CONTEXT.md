@@ -1,0 +1,83 @@
+# Lantern: durable project context
+
+Recorded: 2026-10-08. Reviewed source revision: `ac5bd0bb096566e5fbec07bd021ca28d6e914415`.
+
+## How to resume work
+
+1. Read this file for verified current state and user preferences.
+2. Read `PROJECT_SPECIFICATION.md` for the complete, verbatim user-provided specification (45,301 bytes).
+3. Read `PHASE_1_2_REVIEW.md` before considering the first two phases complete.
+4. Read `PHASE_3_PLAN.md` before implementing transfer-domain work.
+5. Inspect current code and changes; these documents describe the reviewed revision, not a permanent claim about future code.
+
+The latest user instruction was to preserve the project information, review everything through Phase 2, and make a comprehensive Phase 3 plan. Implementation of the plan has not been requested in this turn. Production source was not changed by the review.
+
+These are repository files, not account-wide ChatGPT memory. Future chats using this repository can load them through `AGENTS.md`. A separate chat without this repository will need the context files supplied again.
+
+## Product and engineering preferences
+
+Lantern is a Windows LAN file-transfer desktop application in C# and modern .NET Windows Forms. The goal is to discover nearby application instances, select a device, choose files, send them after recipient acceptance, show progress, verify integrity, and handle failures gracefully. Folders come later. The finished UI should be polished, responsive, accessible, and simple enough that users need not understand networking.
+
+User priorities, in order: correctness, reliability, maintainability, type safety, performance, clean architecture, good UX/UI, security, testability. Development is deliberately phased; do not implement everything at once. The user wants to understand and maintain the project. Use descriptive names, explicit dependencies, small cohesive classes, and abstractions with real justification. Avoid unnecessary rewrites of working architecture.
+
+Core distinctions:
+
+| Concept | Responsibility |
+| --- | --- |
+| Device | Application installation identity and presence; never a connection or transfer |
+| DeviceDiscovery | UDP discovery, announcements, last-seen tracking and availability |
+| NetworkServer / NetworkClient | Accepting / establishing TCP connections |
+| Connection | Reliable framed message transport; not message semantics |
+| Message / ProtocolSerializer | Typed protocol information / conversion to and from bytes |
+| Transfer | One file operation's identity, participants, metadata and state |
+| TransferManager | Future transfer coordination and lifecycle ownership |
+| FileSender / FileReceiver | Future streaming file I/O and byte transmission |
+| UI | Presentation and user input through application APIs |
+
+Discovery is not trust. UDP and TCP input are untrusted. Keep maximum message/packet sizes, validation, path safety, and cancellation explicit. Metadata models must never open files or sockets. Use established encryption and authentication in the security phase.
+
+## Canonical phase order
+
+1. TCP networking and protocol foundation.
+2. LAN discovery and presence.
+3. Transfer-domain models and state invariants.
+4. Actual file transfer, negotiation, progress, streaming, path safety and cleanup.
+5. WinForms UI.
+6. Reliability and robustness.
+7. File integrity, including SHA-256 verification.
+8. Security, encryption and peer authentication.
+9. Production polish, preferences, diagnostics and packaging.
+
+Some older Phase 2 documents incorrectly label later phases; use this order and the complete specification.
+
+## Verified repository state
+
+Repository root: `/workspace/Lantern`; origin: `https://github.com/JaggedGem/Lantern.git`. No remote changes were made. The solution contains `Lantern`, `Lantern.Tests`, and `Lantern.Harness`. The main application and tests target `net10.0-windows`; the application enables WinForms. Nullable references and implicit usings are enabled. Tests use xUnit.
+
+- `Networking/Connection.cs` wraps a `TcpClient`; the internal `FramedMessageChannel` owns 4-byte big-endian framing, exact reads, send and receive serialization, pooled receive buffers, and a default 1 MiB message cap.
+- `NetworkServer` listens on IPv4 Any, accepts asynchronously, exposes accepted connections through an event, and supports start/stop. `NetworkClient` supports async connection and cancellation.
+- `Networking/Protocol` contains one `Message` envelope, a nonempty `MessageId` value type, `Hello` / `Error` message types, typed payloads, and a JSON serializer. Preserve this working envelope/payload design instead of replacing it solely to match a conceptual sketch.
+- `Networking/Discovery` contains JSON UDP announcements, ID-based deduplication and self-filtering, source-endpoint IP selection, heartbeat and expiration tasks. UDP port 52845; heartbeat 3 seconds; offline threshold 15 seconds; expiration scan 5 seconds; packet limit 4096 bytes; protocol version 1.
+- `Models/Device` is currently mutable. `LocalDevice` contains advertised identity, name and TCP port. `LocalDeviceIdentityProvider` stores a JSON ID under the platform application-data directory, intended as `%APPDATA%\Lantern\device-id.json` on Windows.
+- WinForms is an empty shell; `Program` and `MainWindow` do not start networking/discovery. The console harness demonstrates a manual Hello exchange.
+- Early transfer placeholders exist: `Models/TransferFile`, `Models/TransferRequest`, and empty `Transfers/FileSender`. They are not a functioning transfer domain. `TransferRequest` currently holds a sender implementation and mutable array, with no-op acceptance methods.
+
+## Review verdict and evidence
+
+Phase 1 has a useful foundation but needs lifecycle/framing hardening. Phase 2 is implemented in part and does **not** satisfy its definition of done. Important issues: offline peers are immediately deleted; last-seen is refreshed when marking offline; discovery returns internal mutable objects and calls subscribers under locks; packet validation omits type, required-field checks, nonempty IDs and name bounds; persistence failures silently lose stable identity; interface handling is incomplete; metadata updates lack notifications; broad catches hide errors.
+
+Verified on this date:
+
+- Original Windows-targeted solution cross-build succeeded on Linux with 0 reported warnings/errors (incremental build).
+- Existing tests: 32/32 passed using the pre-existing Linux source-linked harness with collection parallelism disabled.
+- Default test settings: 30 passed, 2 failed due to discovery-port collisions.
+- Targeted review probes demonstrate defects the existing tests do not cover. They are separate from the production test suite.
+- Windows runtime execution, cross-machine broadcast discovery, multi-interface discovery and manual WinForms behavior were not verified here.
+
+See the review for source locations, severity, evidence and repair gates. Older completion checklists and performance claims are not verification evidence.
+
+## Proposed Phase 3 direction
+
+Implement a small pure domain: immutable file metadata, transfer identity and participant IDs, direction/status enums, explicit legal transitions, checked total sizes, cumulative byte progress, timestamps, typed failure data, and tests. Preserve the existing namespace style (`Lantern.Models`) to minimize churn. Avoid storing live `Device`, `Connection`, sender implementations or local absolute paths in wire-ready metadata. Separate local file selection from logical relative paths in Phase 4.
+
+The detailed plan proposes immutable transfer versions and a future single-owner coordinator. These are recommendations awaiting implementation, not changes already made or user-approved API commitments. Do not build transport payloads, managers, senders/receivers, folder enumeration, UI, hashing or encryption in Phase 3.

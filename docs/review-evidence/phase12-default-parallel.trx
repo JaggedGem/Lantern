@@ -1,0 +1,272 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<TestRun id="b6f2ca5b-0fe4-48dd-a2bf-187624fab07d" name="@37c7dd7f0255 2026-10-08 16:10:17" xmlns="http://microsoft.com/schemas/VisualStudio/TeamTest/2010">
+  <Times creation="2026-10-08T16:10:17.8322274+00:00" queuing="2026-10-08T16:10:17.8322274+00:00" start="2026-10-08T16:10:17.0511229+00:00" finish="2026-10-08T16:10:20.3642571+00:00" />
+  <TestSettings name="default" id="686362b2-8835-4170-afb0-029f894edf3f">
+    <Deployment runDeploymentRoot="_37c7dd7f0255_2026-10-08_16_10_17" />
+  </TestSettings>
+  <Results>
+    <UnitTestResult executionId="31ade710-2bf4-4304-aa28-6330b2faffda" testId="81be8061-8b1f-9b9e-4733-955305d69cc2" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops" computerName="37c7dd7f0255" duration="00:00:00.0009476" startTime="2026-10-08T16:10:17.8146660+00:00" endTime="2026-10-08T16:10:17.8147410+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="31ade710-2bf4-4304-aa28-6330b2faffda">
+      <Output>
+        <ErrorInfo>
+          <Message>System.Net.Sockets.SocketException : Address already in use</Message>
+          <StackTrace>   at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Lantern.Networking.Discovery.DeviceDiscovery.StartAsync(CancellationToken cancellationToken) in /workspace/Lantern/Lantern/Networking/Discovery/DeviceDiscovery.cs:line 154
+   at Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops() in /workspace/Lantern/Lantern.Tests/NetworkingTests.cs:line 381
+   at Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops() in /workspace/Lantern/Lantern.Tests/NetworkingTests.cs:line 385
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="29c5864f-2222-48c8-a610-6b76f07c77df" testId="ae716d40-f0d5-d926-98f7-c1c38934ba4b" testName="Lantern.Tests.DiscoveryTests.Device_UpdateIpAddressRefreshesLastSeen" computerName="37c7dd7f0255" duration="00:00:00.0104062" startTime="2026-10-08T16:10:17.7992194+00:00" endTime="2026-10-08T16:10:17.8003071+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="29c5864f-2222-48c8-a610-6b76f07c77df" />
+    <UnitTestResult executionId="dac7d5ca-67d6-4a94-a5d3-bda8e510a975" testId="61ccbdf9-8d3b-9957-767f-bedb5b6e52ed" testName="Lantern.Tests.NetworkingTests.NetworkClient_ConnectsAndReportsFailureAndCancellation" computerName="37c7dd7f0255" duration="00:00:00.0096881" startTime="2026-10-08T16:10:17.7973014+00:00" endTime="2026-10-08T16:10:17.7992572+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="dac7d5ca-67d6-4a94-a5d3-bda8e510a975" />
+    <UnitTestResult executionId="9a3eb98c-6933-4c18-8e04-58fd571ef0d9" testId="aadb02bc-a07d-5bab-667f-4ec79bce814d" testName="Lantern.Tests.DiscoveryTests.Device_UpdateStatusRefreshesLastSeen" computerName="37c7dd7f0255" duration="00:00:00.0103316" startTime="2026-10-08T16:10:17.8155442+00:00" endTime="2026-10-08T16:10:17.8177469+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="9a3eb98c-6933-4c18-8e04-58fd571ef0d9" />
+    <UnitTestResult executionId="28f5fec7-091d-4600-b346-a3b243c1ca34" testId="0012be35-fa46-fc40-c364-e0e5b97abd41" testName="Lantern.Tests.NetworkingTests.FramedMessageChannel_ReceivesMultipleMessagesSequentially" computerName="37c7dd7f0255" duration="00:00:00.0022006" startTime="2026-10-08T16:10:17.7593153+00:00" endTime="2026-10-08T16:10:17.7593607+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="28f5fec7-091d-4600-b346-a3b243c1ca34" />
+    <UnitTestResult executionId="d6de4f7f-fe6a-4dbe-b7ef-5ea37bfb9604" testId="728c4389-de48-82cd-9bab-dd86a1106238" testName="Lantern.Tests.DiscoveryIntegrationTests.Discovery_DoesNotDiscoverItself" computerName="37c7dd7f0255" duration="00:00:01.0038130" startTime="2026-10-08T16:10:17.8015119+00:00" endTime="2026-10-08T16:10:18.7867183+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d6de4f7f-fe6a-4dbe-b7ef-5ea37bfb9604" />
+    <UnitTestResult executionId="143485a4-f7df-4c37-8f89-44cbdb274405" testId="083d0816-a35f-89bf-c55d-8c5e4d468de1" testName="Lantern.Tests.DiscoveryIntegrationTests.SingleDiscoveryInstance_StartsAndAnnouncesWithoutErrors" computerName="37c7dd7f0255" duration="00:00:00.9992663" startTime="2026-10-08T16:10:18.7869852+00:00" endTime="2026-10-08T16:10:19.7873693+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="143485a4-f7df-4c37-8f89-44cbdb274405" />
+    <UnitTestResult executionId="292afe2f-36f7-4056-a109-30cf8d4c0de8" testId="3414ddb7-7de6-e709-ea31-e3b9a54dcc6d" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_UpdatesExistingDeviceIpAddress" computerName="37c7dd7f0255" duration="00:00:00.0013749" startTime="2026-10-08T16:10:17.7976595+00:00" endTime="2026-10-08T16:10:17.7976944+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="292afe2f-36f7-4056-a109-30cf8d4c0de8" />
+    <UnitTestResult executionId="00fa478f-4c95-4239-8941-54ee3de6078b" testId="32d751c3-82f0-9b2e-8bd5-9b2f48f6143b" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_RejectsDoubleStart" computerName="37c7dd7f0255" duration="00:00:00.0262052" startTime="2026-10-08T16:10:17.6987182+00:00" endTime="2026-10-08T16:10:17.7177954+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="00fa478f-4c95-4239-8941-54ee3de6078b" />
+    <UnitTestResult executionId="fded9830-14e1-4f40-bcd9-7b205045ccd5" testId="649fea72-ac6e-9263-1425-d1ed36bd022e" testName="Lantern.Tests.NetworkingTests.NetworkServer_RejectsDuplicateStart" computerName="37c7dd7f0255" duration="00:00:00.0012646" startTime="2026-10-08T16:10:17.7965071+00:00" endTime="2026-10-08T16:10:17.7965782+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="fded9830-14e1-4f40-bcd9-7b205045ccd5" />
+    <UnitTestResult executionId="3e415789-9c75-4541-80a2-51104870e81e" testId="261ddc8b-c3e6-4e3e-7449-3c356a1ff4c2" testName="Lantern.Tests.NetworkingTests.ProtocolSerializer_RejectsMalformedData" computerName="37c7dd7f0255" duration="00:00:00.0011997" startTime="2026-10-08T16:10:17.7968549+00:00" endTime="2026-10-08T16:10:17.7968918+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="3e415789-9c75-4541-80a2-51104870e81e" />
+    <UnitTestResult executionId="91f74560-df5e-47ea-8715-96533f1e1ad5" testId="d9616bb2-313e-afa1-e9d2-540d4cb40df1" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_SupportsAsyncDisposal" computerName="37c7dd7f0255" duration="00:00:00.0005593" startTime="2026-10-08T16:10:17.8023388+00:00" endTime="2026-10-08T16:10:17.8024071+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="91f74560-df5e-47ea-8715-96533f1e1ad5" />
+    <UnitTestResult executionId="7a921e6e-d773-451b-9c24-75ee459a0d67" testId="99b009e7-ecb0-6cf1-8089-f9eaca69e613" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_RejectsInvalidMessages" computerName="37c7dd7f0255" duration="00:00:00.0436288" startTime="2026-10-08T16:10:17.6369340+00:00" endTime="2026-10-08T16:10:17.6883228+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="7a921e6e-d773-451b-9c24-75ee459a0d67" />
+    <UnitTestResult executionId="18633a39-5449-4720-97a2-347141e94692" testId="c3a2b9db-cc70-878e-5eb3-150fb5e1d6ba" testName="Lantern.Tests.NetworkingTests.NetworkServer_StartsStopsAndReleasesPort" computerName="37c7dd7f0255" duration="00:00:00.0016283" startTime="2026-10-08T16:10:17.7995704+00:00" endTime="2026-10-08T16:10:17.7996201+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="18633a39-5449-4720-97a2-347141e94692" />
+    <UnitTestResult executionId="04496064-f293-4deb-aed7-4ac33d33abe0" testId="790d2002-ab2b-fee5-9be3-ed4f70aec0bc" testName="Lantern.Tests.DiscoveryTests.Device_UpdateNameRefreshesLastSeen" computerName="37c7dd7f0255" duration="00:00:00.0103277" startTime="2026-10-08T16:10:17.8025482+00:00" endTime="2026-10-08T16:10:17.8026007+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="04496064-f293-4deb-aed7-4ac33d33abe0" />
+    <UnitTestResult executionId="e18d89fb-52a7-4386-be9e-a90cabe3cea8" testId="3af00082-2962-7d24-2c85-dde98fbf090c" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_SupportsDisposal" computerName="37c7dd7f0255" duration="00:00:00.0001321" startTime="2026-10-08T16:10:17.7990329+00:00" endTime="2026-10-08T16:10:17.7990756+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e18d89fb-52a7-4386-be9e-a90cabe3cea8" />
+    <UnitTestResult executionId="e489c001-4d4c-40e4-a1f3-4a1ae7117dc0" testId="598e05fd-aef2-69a8-d9e5-5ae4986af5de" testName="Lantern.Tests.NetworkingTests.ProtocolSerializer_RoundTripsErrorMessage" computerName="37c7dd7f0255" duration="00:00:00.0005249" startTime="2026-10-08T16:10:17.7993443+00:00" endTime="2026-10-08T16:10:17.7993786+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="e489c001-4d4c-40e4-a1f3-4a1ae7117dc0" />
+    <UnitTestResult executionId="1cc2752b-b36c-4312-8f0a-b838321cb530" testId="0269bf13-e450-fc13-a137-3d0c22f5ac54" testName="Lantern.Tests.NetworkingTests.ProtocolSerializer_RoundTripsHelloMessage" computerName="37c7dd7f0255" duration="00:00:00.0005965" startTime="2026-10-08T16:10:17.7969866+00:00" endTime="2026-10-08T16:10:17.7970214+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1cc2752b-b36c-4312-8f0a-b838321cb530" />
+    <UnitTestResult executionId="6b4a7a11-9910-49b4-a4ec-9c5692b5f4f3" testId="5a424e2f-3c61-e82f-a5f0-0f0ccb25ba4e" testName="Lantern.Tests.DiscoveryTests.Device_UpdatePortRefreshesLastSeen" computerName="37c7dd7f0255" duration="00:00:00.0109066" startTime="2026-10-08T16:10:17.7426522+00:00" endTime="2026-10-08T16:10:17.7536175+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6b4a7a11-9910-49b4-a4ec-9c5692b5f4f3" />
+    <UnitTestResult executionId="09f8c881-35a9-4dae-9c23-0b14c04ba08a" testId="a86990ca-2ea4-dee2-f5fc-40c91c1f1255" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks" computerName="37c7dd7f0255" duration="00:00:00.0010535" startTime="2026-10-08T16:10:17.8027329+00:00" endTime="2026-10-08T16:10:17.8064967+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Failed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="09f8c881-35a9-4dae-9c23-0b14c04ba08a">
+      <Output>
+        <ErrorInfo>
+          <Message>System.Net.Sockets.SocketException : Address already in use</Message>
+          <StackTrace>   at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+   at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+   at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+   at Lantern.Networking.Discovery.DeviceDiscovery.StartAsync(CancellationToken cancellationToken) in /workspace/Lantern/Lantern/Networking/Discovery/DeviceDiscovery.cs:line 154
+   at Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks() in /workspace/Lantern/Lantern.Tests/NetworkingTests.cs:line 405
+   at Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks() in /workspace/Lantern/Lantern.Tests/NetworkingTests.cs:line 413
+--- End of stack trace from previous location ---</StackTrace>
+        </ErrorInfo>
+      </Output>
+    </UnitTestResult>
+    <UnitTestResult executionId="f1f4eefd-cd6e-4c88-87d7-b8eaa1d7461f" testId="8c13e901-2d7d-8d8d-b805-859820a08196" testName="Lantern.Tests.DiscoveryTests.LocalDevice_ConstructorValidatesInput" computerName="37c7dd7f0255" duration="00:00:00.0005819" startTime="2026-10-08T16:10:17.8014152+00:00" endTime="2026-10-08T16:10:17.8015695+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f1f4eefd-cd6e-4c88-87d7-b8eaa1d7461f" />
+    <UnitTestResult executionId="bfded2f8-2c5b-4837-8465-4b4930d97870" testId="71ba3f0a-5555-1dd8-b266-1e76cf122ee7" testName="Lantern.Tests.DiscoveryTests.DiscoveryMessage_SerializesAndDeserializes" computerName="37c7dd7f0255" duration="00:00:00.0025246" startTime="2026-10-08T16:10:17.7975496+00:00" endTime="2026-10-08T16:10:17.7975813+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="bfded2f8-2c5b-4837-8465-4b4930d97870" />
+    <UnitTestResult executionId="d726f8d5-b120-48ab-900c-7244fdf7f739" testId="dc85f99b-54a3-b66e-1c8a-6bb36ac7fd87" testName="Lantern.Tests.NetworkingTests.FramedMessageChannel_ReceivesWhenStreamDeliversPartialChunks" computerName="37c7dd7f0255" duration="00:00:00.0028100" startTime="2026-10-08T16:10:17.7535728+00:00" endTime="2026-10-08T16:10:17.7590788+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="d726f8d5-b120-48ab-900c-7244fdf7f739" />
+    <UnitTestResult executionId="a83873bd-5393-419a-8c2c-f4770dae4668" testId="d15f9922-69fa-4a00-fb51-eca42e958131" testName="Lantern.Tests.DiscoveryTests.LocalDeviceIdentityProvider_GeneratesAndPersistsDeviceId" computerName="37c7dd7f0255" duration="00:00:00.0018026" startTime="2026-10-08T16:10:17.7974335+00:00" endTime="2026-10-08T16:10:17.7974701+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="a83873bd-5393-419a-8c2c-f4770dae4668" />
+    <UnitTestResult executionId="42f021f0-519c-4058-a5a6-bd56b8acc62b" testId="9b8ff7ca-426d-dea3-a8f4-c60c63521028" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_SupportsProcessingValidMessage" computerName="37c7dd7f0255" duration="00:00:00.0188744" startTime="2026-10-08T16:10:17.7235043+00:00" endTime="2026-10-08T16:10:17.7424435+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="42f021f0-519c-4058-a5a6-bd56b8acc62b" />
+    <UnitTestResult executionId="1c2da262-c86b-4dd2-b531-1f87a1366429" testId="cb719b5f-d791-b310-98fb-15f540d4718e" testName="Lantern.Tests.DiscoveryTests.DeviceDiscovery_IgnoresLocalDevice" computerName="37c7dd7f0255" duration="00:00:00.0010138" startTime="2026-10-08T16:10:17.8005123+00:00" endTime="2026-10-08T16:10:17.8012554+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="1c2da262-c86b-4dd2-b531-1f87a1366429" />
+    <UnitTestResult executionId="040b9466-8818-45c8-b139-9e972d4831fc" testId="652bc510-3ae5-243c-17a9-1a0fbe7676cd" testName="Lantern.Tests.NetworkingTests.FramedMessageChannel_SendsAndReceivesSingleMessage" computerName="37c7dd7f0255" duration="00:00:00.0012273" startTime="2026-10-08T16:10:17.7970998+00:00" endTime="2026-10-08T16:10:17.7971334+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="040b9466-8818-45c8-b139-9e972d4831fc" />
+    <UnitTestResult executionId="76d71a42-ed45-47cb-b0d2-4d1d5546f95d" testId="3903f151-9ca7-01bc-b806-3be42b6220c3" testName="Lantern.Tests.NetworkingTests.Connection_CanExchangeHelloAndHandleClosure" computerName="37c7dd7f0255" duration="00:00:00.0374834" startTime="2026-10-08T16:10:17.7133768+00:00" endTime="2026-10-08T16:10:17.7512096+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="76d71a42-ed45-47cb-b0d2-4d1d5546f95d" />
+    <UnitTestResult executionId="f8997645-5a51-4d11-9355-ea4fb5df49e7" testId="3f4f2b68-bbf4-fb88-5ba0-6612996f5fdf" testName="Lantern.Tests.NetworkingTests.FramedMessageChannel_RejectsOversizedLengthPrefix" computerName="37c7dd7f0255" duration="00:00:00.0007406" startTime="2026-10-08T16:10:17.7994615+00:00" endTime="2026-10-08T16:10:17.7994947+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="f8997645-5a51-4d11-9355-ea4fb5df49e7" />
+    <UnitTestResult executionId="6eb38ad8-7097-47d1-90dd-f8641a72dfe9" testId="b6b609c3-a399-98b2-2ee6-f770747c54fe" testName="Lantern.Tests.DiscoveryIntegrationTests.Discovery_SupervisedEventHandling" computerName="37c7dd7f0255" duration="00:00:00.5007095" startTime="2026-10-08T16:10:19.7877658+00:00" endTime="2026-10-08T16:10:20.2896469+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="6eb38ad8-7097-47d1-90dd-f8641a72dfe9" />
+    <UnitTestResult executionId="aed040a4-4152-4233-acf0-c7218b498b81" testId="3be79957-d10c-60b5-3e59-3c309657ea67" testName="Lantern.Tests.NetworkingTests.NetworkServer_RepeatedStartStopWorks" computerName="37c7dd7f0255" duration="00:00:00.0016218" startTime="2026-10-08T16:10:17.7514071+00:00" endTime="2026-10-08T16:10:17.7534386+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="aed040a4-4152-4233-acf0-c7218b498b81" />
+    <UnitTestResult executionId="b0ee24f8-6852-420b-b135-cecb9ec18837" testId="97e81510-a656-2072-f4af-81f0ea4ea2ca" testName="Lantern.Tests.DiscoveryTests.Device_UpdatesMaintainsLastSeen" computerName="37c7dd7f0255" duration="00:00:00.0103641" startTime="2026-10-08T16:10:17.7537044+00:00" endTime="2026-10-08T16:10:17.7973398+00:00" testType="13cdc9d9-ddb5-4fa4-a97d-d965ccfc6d4b" outcome="Passed" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" relativeResultsDirectory="b0ee24f8-6852-420b-b135-cecb9ec18837" />
+  </Results>
+  <TestDefinitions>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_UpdatesExistingDeviceIpAddress" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="3414ddb7-7de6-e709-ea31-e3b9a54dcc6d">
+      <Execution id="292afe2f-36f7-4056-a109-30cf8d4c0de8" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_UpdatesExistingDeviceIpAddress" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.FramedMessageChannel_RejectsOversizedLengthPrefix" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="3f4f2b68-bbf4-fb88-5ba0-6612996f5fdf">
+      <Execution id="f8997645-5a51-4d11-9355-ea4fb5df49e7" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="FramedMessageChannel_RejectsOversizedLengthPrefix" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_SupportsDisposal" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="3af00082-2962-7d24-2c85-dde98fbf090c">
+      <Execution id="e18d89fb-52a7-4386-be9e-a90cabe3cea8" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_SupportsDisposal" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.LocalDeviceIdentityProvider_GeneratesAndPersistsDeviceId" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="d15f9922-69fa-4a00-fb51-eca42e958131">
+      <Execution id="a83873bd-5393-419a-8c2c-f4770dae4668" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="LocalDeviceIdentityProvider_GeneratesAndPersistsDeviceId" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="a86990ca-2ea4-dee2-f5fc-40c91c1f1255">
+      <Execution id="09f8c881-35a9-4dae-9c23-0b14c04ba08a" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_RepeatedStartStopWorks" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.ProtocolSerializer_RoundTripsErrorMessage" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="598e05fd-aef2-69a8-d9e5-5ae4986af5de">
+      <Execution id="e489c001-4d4c-40e4-a1f3-4a1ae7117dc0" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="ProtocolSerializer_RoundTripsErrorMessage" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.FramedMessageChannel_SendsAndReceivesSingleMessage" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="652bc510-3ae5-243c-17a9-1a0fbe7676cd">
+      <Execution id="040b9466-8818-45c8-b139-9e972d4831fc" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="FramedMessageChannel_SendsAndReceivesSingleMessage" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.NetworkServer_RepeatedStartStopWorks" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="3be79957-d10c-60b5-3e59-3c309657ea67">
+      <Execution id="aed040a4-4152-4233-acf0-c7218b498b81" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="NetworkServer_RepeatedStartStopWorks" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.Connection_CanExchangeHelloAndHandleClosure" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="3903f151-9ca7-01bc-b806-3be42b6220c3">
+      <Execution id="76d71a42-ed45-47cb-b0d2-4d1d5546f95d" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="Connection_CanExchangeHelloAndHandleClosure" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.ProtocolSerializer_RejectsMalformedData" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="261ddc8b-c3e6-4e3e-7449-3c356a1ff4c2">
+      <Execution id="3e415789-9c75-4541-80a2-51104870e81e" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="ProtocolSerializer_RejectsMalformedData" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.FramedMessageChannel_ReceivesMultipleMessagesSequentially" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="0012be35-fa46-fc40-c364-e0e5b97abd41">
+      <Execution id="28f5fec7-091d-4600-b346-a3b243c1ca34" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="FramedMessageChannel_ReceivesMultipleMessagesSequentially" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.NetworkClient_ConnectsAndReportsFailureAndCancellation" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="61ccbdf9-8d3b-9957-767f-bedb5b6e52ed">
+      <Execution id="dac7d5ca-67d6-4a94-a5d3-bda8e510a975" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="NetworkClient_ConnectsAndReportsFailureAndCancellation" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_SupportsProcessingValidMessage" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="9b8ff7ca-426d-dea3-a8f4-c60c63521028">
+      <Execution id="42f021f0-519c-4058-a5a6-bd56b8acc62b" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_SupportsProcessingValidMessage" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.NetworkServer_RejectsDuplicateStart" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="649fea72-ac6e-9263-1425-d1ed36bd022e">
+      <Execution id="fded9830-14e1-4f40-bcd9-7b205045ccd5" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="NetworkServer_RejectsDuplicateStart" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.Device_UpdateNameRefreshesLastSeen" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="790d2002-ab2b-fee5-9be3-ed4f70aec0bc">
+      <Execution id="04496064-f293-4deb-aed7-4ac33d33abe0" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="Device_UpdateNameRefreshesLastSeen" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_RejectsInvalidMessages" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="99b009e7-ecb0-6cf1-8089-f9eaca69e613">
+      <Execution id="7a921e6e-d773-451b-9c24-75ee459a0d67" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_RejectsInvalidMessages" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryIntegrationTests.SingleDiscoveryInstance_StartsAndAnnouncesWithoutErrors" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="083d0816-a35f-89bf-c55d-8c5e4d468de1">
+      <Execution id="143485a4-f7df-4c37-8f89-44cbdb274405" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryIntegrationTests" name="SingleDiscoveryInstance_StartsAndAnnouncesWithoutErrors" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryIntegrationTests.Discovery_DoesNotDiscoverItself" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="728c4389-de48-82cd-9bab-dd86a1106238">
+      <Execution id="d6de4f7f-fe6a-4dbe-b7ef-5ea37bfb9604" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryIntegrationTests" name="Discovery_DoesNotDiscoverItself" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.Device_UpdateIpAddressRefreshesLastSeen" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="ae716d40-f0d5-d926-98f7-c1c38934ba4b">
+      <Execution id="29c5864f-2222-48c8-a610-6b76f07c77df" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="Device_UpdateIpAddressRefreshesLastSeen" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_IgnoresLocalDevice" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="cb719b5f-d791-b310-98fb-15f540d4718e">
+      <Execution id="1c2da262-c86b-4dd2-b531-1f87a1366429" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_IgnoresLocalDevice" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.Device_UpdatePortRefreshesLastSeen" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="5a424e2f-3c61-e82f-a5f0-0f0ccb25ba4e">
+      <Execution id="6b4a7a11-9910-49b4-a4ec-9c5692b5f4f3" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="Device_UpdatePortRefreshesLastSeen" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_SupportsAsyncDisposal" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="d9616bb2-313e-afa1-e9d2-540d4cb40df1">
+      <Execution id="91f74560-df5e-47ea-8715-96533f1e1ad5" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_SupportsAsyncDisposal" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.FramedMessageChannel_ReceivesWhenStreamDeliversPartialChunks" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="dc85f99b-54a3-b66e-1c8a-6bb36ac7fd87">
+      <Execution id="d726f8d5-b120-48ab-900c-7244fdf7f739" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="FramedMessageChannel_ReceivesWhenStreamDeliversPartialChunks" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.Device_UpdateStatusRefreshesLastSeen" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="aadb02bc-a07d-5bab-667f-4ec79bce814d">
+      <Execution id="9a3eb98c-6933-4c18-8e04-58fd571ef0d9" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="Device_UpdateStatusRefreshesLastSeen" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.LocalDevice_ConstructorValidatesInput" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="8c13e901-2d7d-8d8d-b805-859820a08196">
+      <Execution id="f1f4eefd-cd6e-4c88-87d7-b8eaa1d7461f" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="LocalDevice_ConstructorValidatesInput" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DiscoveryMessage_SerializesAndDeserializes" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="71ba3f0a-5555-1dd8-b266-1e76cf122ee7">
+      <Execution id="bfded2f8-2c5b-4837-8465-4b4930d97870" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DiscoveryMessage_SerializesAndDeserializes" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.ProtocolSerializer_RoundTripsHelloMessage" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="0269bf13-e450-fc13-a137-3d0c22f5ac54">
+      <Execution id="1cc2752b-b36c-4312-8f0a-b838321cb530" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="ProtocolSerializer_RoundTripsHelloMessage" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_RejectsDoubleStart" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="32d751c3-82f0-9b2e-8bd5-9b2f48f6143b">
+      <Execution id="00fa478f-4c95-4239-8941-54ee3de6078b" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_RejectsDoubleStart" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.NetworkingTests.NetworkServer_StartsStopsAndReleasesPort" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="c3a2b9db-cc70-878e-5eb3-150fb5e1d6ba">
+      <Execution id="18633a39-5449-4720-97a2-347141e94692" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.NetworkingTests" name="NetworkServer_StartsStopsAndReleasesPort" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.Device_UpdatesMaintainsLastSeen" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="97e81510-a656-2072-f4af-81f0ea4ea2ca">
+      <Execution id="b0ee24f8-6852-420b-b135-cecb9ec18837" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="Device_UpdatesMaintainsLastSeen" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="81be8061-8b1f-9b9e-4733-955305d69cc2">
+      <Execution id="31ade710-2bf4-4304-aa28-6330b2faffda" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryTests" name="DeviceDiscovery_StartsAndStops" />
+    </UnitTest>
+    <UnitTest name="Lantern.Tests.DiscoveryIntegrationTests.Discovery_SupervisedEventHandling" storage="/workspace/.lantern-setup/tests/bin/debug/net10.0/lantern.tests.dll" id="b6b609c3-a399-98b2-2ee6-f770747c54fe">
+      <Execution id="6eb38ad8-7097-47d1-90dd-f8641a72dfe9" />
+      <TestMethod codeBase="/workspace/.lantern-setup/Tests/bin/Debug/net10.0/Lantern.Tests.dll" adapterTypeName="executor://xunit/VsTestRunner3/netcore/" className="Lantern.Tests.DiscoveryIntegrationTests" name="Discovery_SupervisedEventHandling" />
+    </UnitTest>
+  </TestDefinitions>
+  <TestEntries>
+    <TestEntry testId="81be8061-8b1f-9b9e-4733-955305d69cc2" executionId="31ade710-2bf4-4304-aa28-6330b2faffda" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="ae716d40-f0d5-d926-98f7-c1c38934ba4b" executionId="29c5864f-2222-48c8-a610-6b76f07c77df" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="61ccbdf9-8d3b-9957-767f-bedb5b6e52ed" executionId="dac7d5ca-67d6-4a94-a5d3-bda8e510a975" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="aadb02bc-a07d-5bab-667f-4ec79bce814d" executionId="9a3eb98c-6933-4c18-8e04-58fd571ef0d9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0012be35-fa46-fc40-c364-e0e5b97abd41" executionId="28f5fec7-091d-4600-b346-a3b243c1ca34" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="728c4389-de48-82cd-9bab-dd86a1106238" executionId="d6de4f7f-fe6a-4dbe-b7ef-5ea37bfb9604" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="083d0816-a35f-89bf-c55d-8c5e4d468de1" executionId="143485a4-f7df-4c37-8f89-44cbdb274405" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3414ddb7-7de6-e709-ea31-e3b9a54dcc6d" executionId="292afe2f-36f7-4056-a109-30cf8d4c0de8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="32d751c3-82f0-9b2e-8bd5-9b2f48f6143b" executionId="00fa478f-4c95-4239-8941-54ee3de6078b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="649fea72-ac6e-9263-1425-d1ed36bd022e" executionId="fded9830-14e1-4f40-bcd9-7b205045ccd5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="261ddc8b-c3e6-4e3e-7449-3c356a1ff4c2" executionId="3e415789-9c75-4541-80a2-51104870e81e" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d9616bb2-313e-afa1-e9d2-540d4cb40df1" executionId="91f74560-df5e-47ea-8715-96533f1e1ad5" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="99b009e7-ecb0-6cf1-8089-f9eaca69e613" executionId="7a921e6e-d773-451b-9c24-75ee459a0d67" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="c3a2b9db-cc70-878e-5eb3-150fb5e1d6ba" executionId="18633a39-5449-4720-97a2-347141e94692" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="790d2002-ab2b-fee5-9be3-ed4f70aec0bc" executionId="04496064-f293-4deb-aed7-4ac33d33abe0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3af00082-2962-7d24-2c85-dde98fbf090c" executionId="e18d89fb-52a7-4386-be9e-a90cabe3cea8" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="598e05fd-aef2-69a8-d9e5-5ae4986af5de" executionId="e489c001-4d4c-40e4-a1f3-4a1ae7117dc0" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="0269bf13-e450-fc13-a137-3d0c22f5ac54" executionId="1cc2752b-b36c-4312-8f0a-b838321cb530" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="5a424e2f-3c61-e82f-a5f0-0f0ccb25ba4e" executionId="6b4a7a11-9910-49b4-a4ec-9c5692b5f4f3" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="a86990ca-2ea4-dee2-f5fc-40c91c1f1255" executionId="09f8c881-35a9-4dae-9c23-0b14c04ba08a" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="8c13e901-2d7d-8d8d-b805-859820a08196" executionId="f1f4eefd-cd6e-4c88-87d7-b8eaa1d7461f" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="71ba3f0a-5555-1dd8-b266-1e76cf122ee7" executionId="bfded2f8-2c5b-4837-8465-4b4930d97870" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="dc85f99b-54a3-b66e-1c8a-6bb36ac7fd87" executionId="d726f8d5-b120-48ab-900c-7244fdf7f739" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="d15f9922-69fa-4a00-fb51-eca42e958131" executionId="a83873bd-5393-419a-8c2c-f4770dae4668" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="9b8ff7ca-426d-dea3-a8f4-c60c63521028" executionId="42f021f0-519c-4058-a5a6-bd56b8acc62b" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="cb719b5f-d791-b310-98fb-15f540d4718e" executionId="1c2da262-c86b-4dd2-b531-1f87a1366429" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="652bc510-3ae5-243c-17a9-1a0fbe7676cd" executionId="040b9466-8818-45c8-b139-9e972d4831fc" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3903f151-9ca7-01bc-b806-3be42b6220c3" executionId="76d71a42-ed45-47cb-b0d2-4d1d5546f95d" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3f4f2b68-bbf4-fb88-5ba0-6612996f5fdf" executionId="f8997645-5a51-4d11-9355-ea4fb5df49e7" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="b6b609c3-a399-98b2-2ee6-f770747c54fe" executionId="6eb38ad8-7097-47d1-90dd-f8641a72dfe9" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="3be79957-d10c-60b5-3e59-3c309657ea67" executionId="aed040a4-4152-4233-acf0-c7218b498b81" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestEntry testId="97e81510-a656-2072-f4af-81f0ea4ea2ca" executionId="b0ee24f8-6852-420b-b135-cecb9ec18837" testListId="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+  </TestEntries>
+  <TestLists>
+    <TestList name="Results Not in a List" id="8c84fa94-04c1-424b-9868-57a2d4851a1d" />
+    <TestList name="All Loaded Results" id="19431567-8539-422a-85d7-44ee4e166bda" />
+  </TestLists>
+  <ResultSummary outcome="Failed">
+    <Counters total="32" executed="32" passed="30" failed="2" error="0" timeout="0" aborted="0" inconclusive="0" passedButRunAborted="0" notRunnable="0" notExecuted="0" disconnected="0" warning="0" completed="0" inProgress="0" pending="0" />
+    <Output>
+      <StdOut>[xUnit.net 00:00:00.00] xUnit.net VSTest Adapter v3.0.1+f8675c32e5 (64-bit .NET 10.0.12)
+[xUnit.net 00:00:00.08]   Discovering: Lantern.Tests
+[xUnit.net 00:00:00.12]   Discovered:  Lantern.Tests
+[xUnit.net 00:00:00.14]   Starting:    Lantern.Tests
+[xUnit.net 00:00:00.34]       System.Net.Sockets.SocketException : Address already in use
+[xUnit.net 00:00:00.34]       Stack Trace:
+[xUnit.net 00:00:00.34]            at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+[xUnit.net 00:00:00.34]            at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+[xUnit.net 00:00:00.34]            at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+[xUnit.net 00:00:00.34]         /workspace/Lantern/Lantern/Networking/Discovery/DeviceDiscovery.cs(154,0): at Lantern.Networking.Discovery.DeviceDiscovery.StartAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.34]         /workspace/Lantern/Lantern.Tests/NetworkingTests.cs(405,0): at Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks()
+[xUnit.net 00:00:00.34]         /workspace/Lantern/Lantern.Tests/NetworkingTests.cs(413,0): at Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks()
+[xUnit.net 00:00:00.34]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:00.35]       System.Net.Sockets.SocketException : Address already in use
+[xUnit.net 00:00:00.35]       Stack Trace:
+[xUnit.net 00:00:00.35]            at System.Net.Sockets.Socket.UpdateStatusAfterSocketErrorAndThrowException(SocketError error, Boolean disconnectOnFailure, String callerName)
+[xUnit.net 00:00:00.35]            at System.Net.Sockets.Socket.DoBind(EndPoint endPointSnapshot, SocketAddress socketAddress)
+[xUnit.net 00:00:00.35]            at System.Net.Sockets.Socket.Bind(EndPoint localEP)
+[xUnit.net 00:00:00.35]         /workspace/Lantern/Lantern/Networking/Discovery/DeviceDiscovery.cs(154,0): at Lantern.Networking.Discovery.DeviceDiscovery.StartAsync(CancellationToken cancellationToken)
+[xUnit.net 00:00:00.35]         /workspace/Lantern/Lantern.Tests/NetworkingTests.cs(381,0): at Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops()
+[xUnit.net 00:00:00.35]         /workspace/Lantern/Lantern.Tests/NetworkingTests.cs(385,0): at Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops()
+[xUnit.net 00:00:00.35]         --- End of stack trace from previous location ---
+[xUnit.net 00:00:02.82]   Finished:    Lantern.Tests
+</StdOut>
+    </Output>
+    <RunInfos>
+      <RunInfo computerName="37c7dd7f0255" outcome="Error" timestamp="2026-10-08T16:10:17.8375104+00:00">
+        <Text>[xUnit.net 00:00:00.34]     Lantern.Tests.DiscoveryTests.DeviceDiscovery_RepeatedStartStopWorks [FAIL]</Text>
+      </RunInfo>
+      <RunInfo computerName="37c7dd7f0255" outcome="Error" timestamp="2026-10-08T16:10:17.8377620+00:00">
+        <Text>[xUnit.net 00:00:00.35]     Lantern.Tests.DiscoveryTests.DeviceDiscovery_StartsAndStops [FAIL]</Text>
+      </RunInfo>
+    </RunInfos>
+  </ResultSummary>
+</TestRun>

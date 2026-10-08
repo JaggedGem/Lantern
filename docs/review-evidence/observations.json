@@ -1,0 +1,105 @@
+[
+  {
+    "name": "D03_unknown_type_accepted",
+    "reproduced": true,
+    "evidence": 1
+  },
+  {
+    "name": "D03_empty_id_accepted",
+    "reproduced": true,
+    "evidence": "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "name": "D03_missing_version_type_id_accepted",
+    "reproduced": true,
+    "evidence": 1
+  },
+  {
+    "name": "D03_3500_character_name_accepted",
+    "reproduced": true,
+    "evidence": 3500
+  },
+  {
+    "name": "D02_external_mutation_changes_internal_state",
+    "reproduced": true,
+    "evidence": 6000
+  },
+  {
+    "name": "D02_reentrant_snapshot_handler_aborted",
+    "reproduced": true,
+    "evidence": {
+      "handlerCompleted": false,
+      "count": 1
+    }
+  },
+  {
+    "name": "D01_offline_removed_and_rediscovered",
+    "reproduced": true,
+    "evidence": {
+      "afterExpiry": 0,
+      "discoveries": 2
+    }
+  },
+  {
+    "name": "D01_offline_status_refreshes_last_seen",
+    "reproduced": true,
+    "evidence": {
+      "lastSeen": "2026-10-08T16:10:14.0786176+00:00",
+      "changed": "2026-10-08T16:11:14.0838187+00:00"
+    }
+  },
+  {
+    "name": "D06_metadata_change_has_no_notification",
+    "reproduced": true,
+    "evidence": {
+      "events": 1,
+      "port": 6000
+    }
+  },
+  {
+    "name": "P04_nonobject_root_exception",
+    "reproduced": true,
+    "evidence": "InvalidOperationException"
+  },
+  {
+    "name": "P04_out_of_range_type_exception",
+    "reproduced": true,
+    "evidence": "FormatException"
+  },
+  {
+    "name": "P01_retry_after_partial_cancellation_desynchronized",
+    "reproduced": true,
+    "evidence": "InvalidDataException"
+  },
+  {
+    "name": "P02_dispose_races_semaphore_release",
+    "reproduced": true,
+    "evidence": {
+      "ObjectName": "System.Threading.SemaphoreSlim",
+      "Message": "Cannot access a disposed object.\nObject name: \u0027System.Threading.SemaphoreSlim\u0027."
+    }
+  },
+  {
+    "name": "positive_concurrent_send_preserves_64_frames",
+    "reproduced": true,
+    "evidence": 64
+  },
+  {
+    "name": "D04_persistence_failure_silently_changes_identity",
+    "reproduced": true,
+    "evidence": {
+      "firstId": "eabec89b-72db-4a46-ab30-a4640919467f",
+      "secondId": "5c2affbc-80a5-425a-b80d-ea218d1c2a52"
+    }
+  },
+  {
+    "name": "D04_persisted_empty_id_accepted",
+    "reproduced": true,
+    "evidence": "00000000-0000-0000-0000-000000000000"
+  },
+  {
+    "name": "P03_server_restarts_after_disposal",
+    "reproduced": true,
+    "evidence": 40111
+  }
+]
