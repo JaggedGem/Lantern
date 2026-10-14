@@ -1,43 +1,22 @@
 # Lantern
 
-Windows LAN file-transfer application in C# and .NET 10 Windows Forms. The Phase 4 backend supports LAN discovery, recipient acceptance and streamed file transfer. The WinForms UI is the next phase.
+Windows LAN file transfer in C# and .NET 10. The backend is implemented; the WinForms UI is the next implementation step.
 
-## What is included
+- Portable `Lantern.Core` owns discovery, immutable transfer state, safe file/folder selection and bounded streaming.
+- Application transfers require mutually authenticated TLS with explicitly paired SHA-256 certificate fingerprints. UDP discovery provides untrusted, visible LAN hints.
+- Each file is checked for exact size and SHA-256 integrity before the complete batch is published. No existing destination files are overwritten.
+- Consent, cancellation, connect/request/read/write deadlines, concurrency and size limits, staged cleanup and orderly shutdown are implemented.
+- Preferences, device identity, peer trust, bounded transfer history, notification events, throughput/ETA, rotating diagnostics and per-user startup registration are available to the future UI.
+- The console harness exercises the complete backend. Windows portable publishing and a per-user Inno Setup installer definition are included.
 
-- `Lantern.Networking.NetworkServer` for accepting TCP connections
-- `Lantern.Networking.NetworkClient` for outgoing TCP connections
-- `Lantern.Networking.Connection` for length-prefixed message exchange
-- `Lantern.Networking.Protocol.ProtocolSerializer` for JSON protocol serialization
-- Automated tests under `Lantern.Tests`
-- UDP LAN discovery with retained offline presence and detached peer snapshots
-- Immutable transfer/file metadata, validated manifests, explicit lifecycle transitions, progress and typed errors
-- TransferManager, bounded file streaming, staged destination publication, cancellation and timeouts
-- Headless application composition and CLI send/receive commands
-
-## Project context
-
-- [Complete specification](docs/PROJECT_SPECIFICATION.md)
-- [Current project context](docs/PROJECT_CONTEXT.md)
-- [Phase completion and verification status](docs/PHASE_PROGRESS.md)
-- [File transfer API and two-machine CLI checks](docs/FILE_TRANSFERS.md)
-- [Historical Phase 1–2 review and repair update](docs/PHASE_1_2_REVIEW.md)
-- [Completed Phase 3 plan](docs/PHASE_3_PLAN.md)
-- [Transfer domain API and examples](docs/TRANSFER_DOMAIN.md)
-
-## Run the tests
-
-```powershell
-dotnet test .\Lantern.sln
+```sh
+dotnet build Lantern.sln -c Release
+dotnet test Lantern.Tests -c Release
+dotnet run --project Lantern.Harness -- identity <data-directory>
 ```
 
-Run on Windows with the .NET 10 SDK. All 299 backend cases pass in the Linux source-linked harness, covering domain invariants, networking/discovery, reliability, transfer protocols, real file transfers and application startup. Windows runtime and physical LAN verification remain pending. Discovery tests sharing the fixed UDP port are serialized through their xUnit collection; other collections can run in parallel. Domain models perform no file or network I/O.
+Core/tests/CLI target `net10.0` and run on Linux or Windows. The desktop host targets `net10.0-windows`; cross-compilation is enabled. No new runtime NuGet dependencies were added.
 
-Linux cross-compilation requires `-p:EnableWindowsTargeting=true`; executing the WinForms-referencing test project requires WindowsDesktop. The managed review workspace uses a source-linked net10.0 backend/test harness for Linux verification.
+Read [current status](docs/PHASE_PROGRESS.md), [application and transfer APIs](docs/FILE_TRANSFERS.md), [durable context](docs/PROJECT_CONTEXT.md), and the [canonical specification](docs/PROJECT_SPECIFICATION.md). The original domain model and its [transition rules](docs/TRANSFER_DOMAIN.md) remain intact.
 
-## Manual handshake concept
-
-1. Start a `NetworkServer` on a chosen port.
-2. Connect with `NetworkClient`.
-3. Exchange `Hello` messages through the returned `Connection` objects.
-4. Dispose or stop the server cleanly.
-
+Windows runtime, physical LAN, WinForms/DPI/accessibility, and installer execution remain platform verification gates. The backend's automated checks and a local encrypted-transfer measurement do not substitute for those gates.
