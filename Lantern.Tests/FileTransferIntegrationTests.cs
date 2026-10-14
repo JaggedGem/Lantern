@@ -22,8 +22,8 @@ public sealed class FileTransferIntegrationTests : IAsyncLifetime
     {
         Directory.CreateDirectory(Destination);
         Directory.CreateDirectory(Path.Combine(_root, "source"));
-        _sender = new TransferManager(_senderId);
-        _receiver = new TransferManager(_receiverId);
+        _sender = new TransferManager(_senderId, options: new TransferOptions { AllowUnencryptedConnections = true });
+        _receiver = new TransferManager(_receiverId, options: new TransferOptions { AllowUnencryptedConnections = true });
         await _sender.StartAsync();
         await _receiver.StartAsync();
     }
@@ -246,7 +246,7 @@ public sealed class FileTransferIntegrationTests : IAsyncLifetime
     public async Task AcceptanceTimeoutRejectsAndLateAcceptCannotStartWriting()
     {
         await _receiver.DisposeAsync();
-        _receiver = new TransferManager(_receiverId, options: new TransferOptions { RequestTimeout = TimeSpan.FromMilliseconds(100) });
+        _receiver = new TransferManager(_receiverId, options: new TransferOptions { AllowUnencryptedConnections = true, RequestTimeout = TimeSpan.FromMilliseconds(100) });
         await _receiver.StartAsync();
         IncomingTransferRequestEventArgs? request = null;
         _receiver.IncomingTransferRequested += (_, args) => request = args;
@@ -261,7 +261,7 @@ public sealed class FileTransferIntegrationTests : IAsyncLifetime
     public async Task StalledSenderTimesOutAndPartialDirectoryIsRemoved()
     {
         await _receiver.DisposeAsync();
-        _receiver = new TransferManager(_receiverId, options: new TransferOptions { InactivityTimeout = TimeSpan.FromMilliseconds(200) });
+        _receiver = new TransferManager(_receiverId, options: new TransferOptions { AllowUnencryptedConnections = true, InactivityTimeout = TimeSpan.FromMilliseconds(200) });
         await _receiver.StartAsync();
         _receiver.IncomingTransferRequested += (_, args) => args.Accept(Destination);
         var failed = TerminalTask(_receiver);
@@ -338,6 +338,46 @@ public sealed class FileTransferIntegrationTests : IAsyncLifetime
         var source = await SourceAsync("file", 100);
         Assert.ThrowsAny<OperationCanceledException>(() => { _ = _sender.SendAsync(Peer, [source], cancellation.Token); });
         Assert.Empty(_sender.GetTransfers());
+        Assert.Empty(Directory.GetFileSystemEntries(Destination));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("not-a-hash")]
+    [InlineData("0000000000000000000000000000000000000000000000000000000000000000")]
+    public async Task MissingMalformedOrWrongHashCannotPublishAFile(string? hash)
+    {
+        _receiver.IncomingTransferRequested += (_, args) => args.Accept(Destination);
+        var terminal = TerminalTask(_receiver);
+        await using var connection = await OpenPeerAsync();
+        var transfer = Guid.NewGuid();
+        var file = Guid.NewGuid();
+        await SendAsync(connection, new TransferRequestPayload(transfer, _senderId, _receiverId,
+            [new TransferFileMetadata(file, "content.bin", 3)]));
+        await connection.ReceiveAsync();
+        await SendAsync(connection, new FileChunkPayload(transfer, file, 0, [1, 2, 3]));
+        await SendAsync(connection, new FileCompletePayload(transfer, file, hash));
+        var failed = await terminal;
+        Assert.Equal(TransferStatus.Failed, failed.Status);
+        Assert.Equal(TransferFailureKind.Integrity, failed.Error!.Kind);
+        Assert.Empty(Directory.GetFileSystemEntries(Destination));
+    }
+
+    [Fact]
+    public async Task OversizedManifestIsRejectedBeforeConsent()
+    {
+        await _receiver.DisposeAsync();
+        _receiver = new TransferManager(_receiverId, options: new TransferOptions { AllowUnencryptedConnections = true, MaximumTransferBytes = 2 });
+        await _receiver.StartAsync();
+        var errors = new TaskCompletionSource<Exception>(TaskCreationOptions.RunContinuationsAsynchronously);
+        _receiver.Error += (_, error) => errors.TrySetResult(error);
+        bool prompted = false;
+        _receiver.IncomingTransferRequested += (_, _) => prompted = true;
+        await using var connection = await OpenPeerAsync();
+        await SendAsync(connection, new TransferRequestPayload(Guid.NewGuid(), _senderId, _receiverId,
+            [new TransferFileMetadata(Guid.NewGuid(), "oversized.bin", 3)]));
+        Assert.IsType<InvalidDataException>(await errors.Task.WaitAsync(TimeSpan.FromSeconds(5)));
+        Assert.False(prompted);
         Assert.Empty(Directory.GetFileSystemEntries(Destination));
     }
 

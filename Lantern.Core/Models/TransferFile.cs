@@ -3,13 +3,26 @@ namespace Lantern.Models;
 /// <summary>Immutable logical file metadata; contains no local filesystem path or file I/O.</summary>
 public sealed class TransferFile
 {
-    public TransferFile(Guid id, string relativePath, long sizeBytes, DateTimeOffset? modifiedAt = null)
+    public TransferFile(
+        Guid id,
+        string relativePath,
+        long sizeBytes,
+        DateTimeOffset? modifiedAt = null
+    )
     {
         if (id == Guid.Empty)
             throw new ArgumentException("The file identifier cannot be empty.", nameof(id));
         ArgumentException.ThrowIfNullOrWhiteSpace(relativePath);
+        if (relativePath.Length > 4096)
+            throw new ArgumentException(
+                "Relative path exceeds the supported length.",
+                nameof(relativePath)
+            );
         if (sizeBytes < 0)
-            throw new ArgumentOutOfRangeException(nameof(sizeBytes), "File size cannot be negative.");
+            throw new ArgumentOutOfRangeException(
+                nameof(sizeBytes),
+                "File size cannot be negative."
+            );
 
         foreach (var segment in relativePath.Split('/'))
             ValidateSegment(segment, nameof(relativePath));
@@ -29,37 +42,62 @@ public sealed class TransferFile
 
     private static void ValidateSegment(string segment, string parameterName)
     {
+        if (segment.Length > 255)
+            throw new ArgumentException("Filename exceeds the supported length.", parameterName);
         if (segment.Length == 0 || segment is "." or ".." || segment[^1] is '.' or ' ')
-            throw new ArgumentException("Paths must contain nonempty relative Windows filename segments.", parameterName);
+            throw new ArgumentException(
+                "Paths must contain nonempty relative Windows filename segments.",
+                parameterName
+            );
 
         for (var index = 0; index < segment.Length; index++)
         {
             var character = segment[index];
-            if (char.IsControl(character) || character is '<' or '>' or ':' or '"' or '\\' or '|' or '?' or '*')
-                throw new ArgumentException("The relative path contains an invalid Windows filename character.", parameterName);
+            if (
+                char.IsControl(character)
+                || character is '<' or '>' or ':' or '"' or '\\' or '|' or '?' or '*'
+            )
+                throw new ArgumentException(
+                    "The relative path contains an invalid Windows filename character.",
+                    parameterName
+                );
             if (char.IsSurrogate(character))
             {
-                if (!char.IsHighSurrogate(character) || index + 1 >= segment.Length || !char.IsLowSurrogate(segment[index + 1]))
-                    throw new ArgumentException("The relative path must contain valid Unicode.", parameterName);
+                if (
+                    !char.IsHighSurrogate(character)
+                    || index + 1 >= segment.Length
+                    || !char.IsLowSurrogate(segment[index + 1])
+                )
+                    throw new ArgumentException(
+                        "The relative path must contain valid Unicode.",
+                        parameterName
+                    );
                 index++;
             }
         }
 
         // Windows device names remain reserved when followed by an extension.
         var stem = segment.Split('.')[0].TrimEnd(' ');
-        if (stem.Equals("CON", StringComparison.OrdinalIgnoreCase)
+        if (
+            stem.Equals("CON", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("PRN", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("AUX", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("NUL", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("CONIN$", StringComparison.OrdinalIgnoreCase)
             || stem.Equals("CONOUT$", StringComparison.OrdinalIgnoreCase)
-            || IsNumberedDevice(stem))
-            throw new ArgumentException("The relative path contains a reserved Windows device name.", parameterName);
+            || IsNumberedDevice(stem)
+        )
+            throw new ArgumentException(
+                "The relative path contains a reserved Windows device name.",
+                parameterName
+            );
     }
 
-    private static bool IsNumberedDevice(string stem)
-        => stem.Length == 4
-           && (stem.StartsWith("COM", StringComparison.OrdinalIgnoreCase)
-               || stem.StartsWith("LPT", StringComparison.OrdinalIgnoreCase))
-           && (stem[3] is >= '1' and <= '9' or '¹' or '²' or '³');
+    private static bool IsNumberedDevice(string stem) =>
+        stem.Length == 4
+        && (
+            stem.StartsWith("COM", StringComparison.OrdinalIgnoreCase)
+            || stem.StartsWith("LPT", StringComparison.OrdinalIgnoreCase)
+        )
+        && (stem[3] is >= '1' and <= '9' or '¹' or '²' or '³');
 }

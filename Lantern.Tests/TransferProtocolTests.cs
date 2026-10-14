@@ -21,6 +21,15 @@ public sealed class TransferProtocolTests
     }
 
     [Theory]
+    [InlineData("\"transferId\":\"11111111-1111-1111-1111-111111111111\",\"transferId\":\"22222222-2222-2222-2222-222222222222\"")]
+    [InlineData("\"transferId\":\"11111111-1111-1111-1111-111111111111\",\"unexpected\":true")]
+    public void AmbiguousOrUnknownPayloadPropertiesAreRejected(string payload)
+    {
+        var json = "{\"type\":4,\"id\":\"11111111-1111-1111-1111-111111111111\",\"payload\":{" + payload + "}}";
+        Assert.Throws<JsonException>(() => new ProtocolSerializer().Deserialize(Encoding.UTF8.GetBytes(json)));
+    }
+
+    [Theory]
     [MemberData(nameof(Payloads))]
     public void TypedTransferPayloadsRoundTripWithinTheFrameLimit(MessagePayload payload)
     {
