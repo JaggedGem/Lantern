@@ -1,36 +1,35 @@
-﻿namespace Lantern;
+#nullable enable
+namespace Lantern;
 
 public partial class MainWindow
 {
-    /// <summary>
-    ///  Required designer variable.
-    /// </summary>
-    private System.ComponentModel.IContainer components = null;
+    private System.ComponentModel.IContainer? components;
 
-    /// <summary>
-    ///  Clean up any resources being used.
-    /// </summary>
-    /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
-    protected override void Dispose(bool disposing) {
-        if (disposing && (components != null)) {
-            components.Dispose();
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _refreshTimer?.Dispose();
+            components?.Dispose();
+            _lifetime.Dispose();
         }
-
         base.Dispose(disposing);
     }
 
-    #region Windows Form Designer generated code
-
-    /// <summary>
-    ///  Required method for Designer support - do not modify
-    ///  the contents of this method with the code editor.
-    /// </summary>
-    private void InitializeComponent() {
+    private void InitializeComponent()
+    {
         components = new System.ComponentModel.Container();
+        SuspendLayout();
         AutoScaleMode = AutoScaleMode.Font;
-        ClientSize = new Size(800, 450);
-        Text = "MainWindow";
+        Font = new Font("Segoe UI", 10);
+        ClientSize = new Size(1120, 800);
+        MinimumSize = new Size(980, 700);
+        StartPosition = FormStartPosition.CenterScreen;
+        Text = "Lantern — Share nearby";
+        BackColor = Color.FromArgb(243, 246, 251);
+        ForeColor = UI.Ui.Ink;
+        KeyPreview = true;
+        BuildLayout();
+        ResumeLayout(true);
     }
-
-    #endregion
 }

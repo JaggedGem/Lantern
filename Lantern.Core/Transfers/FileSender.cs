@@ -28,7 +28,8 @@ public sealed class FileSender(LocalDevice localDevice, string receiveFolder, X5
         lock (_sync)
         {
             if (_listener is not null) throw new InvalidOperationException("Transfers are already listening.");
-            var listener = new TcpListener(IPAddress.Any, localDevice.Port);
+            var listener = new TcpListener(Socket.OSSupportsIPv6 ? IPAddress.IPv6Any : IPAddress.Any, localDevice.Port);
+            if (Socket.OSSupportsIPv6) listener.Server.DualMode = true;
             listener.Start();
             _listener = listener;
             _shutdown = new CancellationTokenSource();

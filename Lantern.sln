@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lantern.Tests", "Lantern.Te
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lantern.Core", "Lantern.Core\Lantern.Core.csproj", "{448F4770-4A60-4961-9C9E-8743F0EC076B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Lantern.UiTests", "Lantern.UiTests\Lantern.UiTests.csproj", "{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -66,6 +68,18 @@ Global
 		{448F4770-4A60-4961-9C9E-8743F0EC076B}.Release|x64.Build.0 = Release|Any CPU
 		{448F4770-4A60-4961-9C9E-8743F0EC076B}.Release|x86.ActiveCfg = Release|Any CPU
 		{448F4770-4A60-4961-9C9E-8743F0EC076B}.Release|x86.Build.0 = Release|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Debug|x64.Build.0 = Debug|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Debug|x86.Build.0 = Debug|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Release|x64.ActiveCfg = Release|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Release|x64.Build.0 = Release|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Release|x86.ActiveCfg = Release|Any CPU
+		{3747FA33-6AB4-47FB-8CAF-816D76CD60D3}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
