@@ -275,6 +275,9 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
         _devicesLock.Dispose();
     }
 
+    /// <summary>Re-announces this device without interrupting discovery or active transfers.</summary>
+    public Task RefreshAsync(CancellationToken cancellationToken = default) => SendAnnouncementAsync(cancellationToken);
+
     private async Task SendAnnouncementAsync(CancellationToken cancellationToken)
     {
         UdpClient? udpClient;
@@ -400,7 +403,8 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
             }
 
             // Validate fields
-            if (string.IsNullOrWhiteSpace(message.DeviceName))
+            if (message.DeviceId == Guid.Empty || !Enum.IsDefined(message.Type) ||
+                string.IsNullOrWhiteSpace(message.DeviceName) || message.DeviceName.Length > 80 || message.DeviceName.Any(char.IsControl))
             {
                 return;
             }
@@ -464,6 +468,8 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
             }
             else
             {
+                // Bound memory use even on an untrusted local network.
+                if (_devices.Count >= 256) return;
                 // New device discovered
                 _devicesLock.EnterWriteLock();
                 try

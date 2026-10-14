@@ -255,18 +255,21 @@ public sealed class NetworkingTests
     }
 }
 
+[Collection("Discovery sockets")]
 public sealed class DiscoveryTests
 {
     [Fact]
     public void LocalDeviceIdentityProvider_GeneratesAndPersistsDeviceId()
     {
-        // This test verifies that a device ID is generated and could be persisted
-        var id1 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId();
-        var id2 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId();
-
-        // Both calls should return the same ID (persistence working)
-        Assert.Equal(id1, id2);
-        Assert.NotEqual(Guid.Empty, id1);
+        var directory = Path.Combine(Path.GetTempPath(), "Lantern-identity-" + Guid.NewGuid());
+        try
+        {
+            var id1 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId(directory);
+            var id2 = LocalDeviceIdentityProvider.LoadOrCreateDeviceId(directory);
+            Assert.Equal(id1, id2);
+            Assert.NotEqual(Guid.Empty, id1);
+        }
+        finally { if (Directory.Exists(directory)) Directory.Delete(directory, true); }
     }
 
     [Fact]
