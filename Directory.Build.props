@@ -1,0 +1,12 @@
+<Project>
+  <PropertyGroup>
+    <Configurations>Debug;Release;SingleExe;SingleExeWithRuntime</Configurations>
+  </PropertyGroup>
+  <!-- These are release builds. Embed symbols in referenced assemblies as well,
+       so packaging does not leave loose PDB files beside Lantern.exe. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'SingleExe' Or '$(Configuration)' == 'SingleExeWithRuntime'">
+    <Optimize>true</Optimize>
+    <DebugType>embedded</DebugType>
+    <DebugSymbols>true</DebugSymbols>
+  </PropertyGroup>
+</Project>

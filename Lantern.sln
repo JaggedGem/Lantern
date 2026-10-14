@@ -18,8 +18,24 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
+		SingleExe|Any CPU = SingleExe|Any CPU
+		SingleExeWithRuntime|Any CPU = SingleExeWithRuntime|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{41E59156-3900-47E8-9C87-9C9CA35E3272}.SingleExe|Any CPU.ActiveCfg = SingleExe|Any CPU
+		{41E59156-3900-47E8-9C87-9C9CA35E3272}.SingleExe|Any CPU.Build.0 = SingleExe|Any CPU
+		{31578283-9119-45F4-B335-415C9DB5C4BE}.SingleExe|Any CPU.ActiveCfg = SingleExe|Any CPU
+		{31578283-9119-45F4-B335-415C9DB5C4BE}.SingleExe|Any CPU.Build.0 = SingleExe|Any CPU
+		{C89C52EF-0F5B-45E0-8BC9-3BA0E1A4B6D1}.SingleExe|Any CPU.ActiveCfg = Release|Any CPU
+		{D8D0A16A-8B17-4A0B-AE8C-0A13B787D1D3}.SingleExe|Any CPU.ActiveCfg = Release|Any CPU
+		{21FF4989-B140-4FE9-AA8F-E1761C2D80D8}.SingleExe|Any CPU.ActiveCfg = Release|Any CPU
+		{41E59156-3900-47E8-9C87-9C9CA35E3272}.SingleExeWithRuntime|Any CPU.ActiveCfg = SingleExeWithRuntime|Any CPU
+		{41E59156-3900-47E8-9C87-9C9CA35E3272}.SingleExeWithRuntime|Any CPU.Build.0 = SingleExeWithRuntime|Any CPU
+		{31578283-9119-45F4-B335-415C9DB5C4BE}.SingleExeWithRuntime|Any CPU.ActiveCfg = SingleExeWithRuntime|Any CPU
+		{31578283-9119-45F4-B335-415C9DB5C4BE}.SingleExeWithRuntime|Any CPU.Build.0 = SingleExeWithRuntime|Any CPU
+		{C89C52EF-0F5B-45E0-8BC9-3BA0E1A4B6D1}.SingleExeWithRuntime|Any CPU.ActiveCfg = Release|Any CPU
+		{D8D0A16A-8B17-4A0B-AE8C-0A13B787D1D3}.SingleExeWithRuntime|Any CPU.ActiveCfg = Release|Any CPU
+		{21FF4989-B140-4FE9-AA8F-E1761C2D80D8}.SingleExeWithRuntime|Any CPU.ActiveCfg = Release|Any CPU
 		{41E59156-3900-47E8-9C87-9C9CA35E3272}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{41E59156-3900-47E8-9C87-9C9CA35E3272}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{41E59156-3900-47E8-9C87-9C9CA35E3272}.Debug|x64.ActiveCfg = Debug|Any CPU

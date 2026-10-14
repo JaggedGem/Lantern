@@ -41,6 +41,8 @@ The WinForms host now uses `LanternApplication` and its existing transfer/trust/
 
 Static English labels/buttons have a `.resx` resource base for future localization; dynamic messages remain English.
 
+Rider can produce one distributable EXE via the solution configurations `SingleExe` (framework-dependent) and `SingleExeWithRuntime` (self-contained), both win-x64 by default. The normal Build target publishes after compilation only for those configurations, with embedded symbols/native bundling and no trimming. Outputs are `artifacts/single-exe/<rid>/<configuration>/Lantern.exe`. Debug/Release remain normal builds. See `RIDER_BUILDS.md`, including disabling ReSharper Build for custom MSBuild steps. Both configurations were built and bundle manifests inspected on Linux; Rider/Windows runtime execution remains unobserved.
+
 Publishing scripts and a per-user Inno Setup definition remain. Execute Windows CI, real desktop workflows, DPI/screen-reader/tray/startup checks, installer/uninstaller and physical LAN verification before release. UI implementation does not establish these runtime results.
 
 See `PHASE_PROGRESS.md`, `VALIDATION.md`, and `FILE_TRANSFERS.md`. The original review under `review-evidence` is historical baseline evidence with historical source locations, not a current test harness or current defect report.

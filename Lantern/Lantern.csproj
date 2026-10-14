@@ -9,6 +9,26 @@
         <ImplicitUsings>enable</ImplicitUsings>
     </PropertyGroup>
 
+    <PropertyGroup Condition="'$(Configuration)' == 'SingleExe' Or '$(Configuration)' == 'SingleExeWithRuntime'">
+        <RuntimeIdentifier Condition="'$(RuntimeIdentifier)' == ''">win-x64</RuntimeIdentifier>
+        <UseAppHost>true</UseAppHost>
+        <SelfContained Condition="'$(Configuration)' == 'SingleExe'">false</SelfContained>
+        <SelfContained Condition="'$(Configuration)' == 'SingleExeWithRuntime'">true</SelfContained>
+        <PublishSingleFile>true</PublishSingleFile>
+        <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+        <PublishTrimmed>false</PublishTrimmed>
+        <PublishDir>$(MSBuildProjectDirectory)/../artifacts/single-exe/$(RuntimeIdentifier)/$(Configuration)/</PublishDir>
+    </PropertyGroup>
+
+    <!-- Run the SDK's real publish pipeline after a normal IDE Build. The child
+         invocation reuses compiled outputs and cannot recursively build/publish. -->
+    <Target Name="PublishSingleExecutableAfterBuild" AfterTargets="Build"
+            Condition="('$(Configuration)' == 'SingleExe' Or '$(Configuration)' == 'SingleExeWithRuntime') And '$(DesignTimeBuild)' != 'true' And '$(NoBuild)' != 'true' And '$(_IsPublishing)' != 'true'">
+        <MSBuild Projects="$(MSBuildProjectFullPath)" Targets="Publish"
+                 Properties="NoBuild=true;BuildProjectReferences=false;_IsPublishing=true" />
+        <Message Importance="high" Text="Single executable ready: $(PublishDir)Lantern.exe" />
+    </Target>
+
     <ItemGroup>
         <ProjectReference Include="../Lantern.Core/Lantern.Core.csproj" />
     </ItemGroup>

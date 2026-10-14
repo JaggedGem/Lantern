@@ -31,6 +31,18 @@ jobs:
       - uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      - name: Verify IDE single-executable builds
+        shell: pwsh
+        run: |
+          foreach ($flavor in @('SingleExe', 'SingleExeWithRuntime')) {
+            dotnet build Lantern.sln -c $flavor -warnaserror
+            if ($LASTEXITCODE -ne 0) { throw "Build failed: $flavor" }
+            $bundleDirectory = Join-Path $PWD "artifacts/single-exe/win-x64/$flavor"
+            $bundleFiles = @(Get-ChildItem $bundleDirectory -File -Recurse)
+            if ($bundleFiles.Count -ne 1 -or $bundleFiles[0].Name -ne 'Lantern.exe') {
+              throw "Expected exactly one Lantern.exe in $bundleDirectory"
+            }
+          }
       - shell: pwsh
         run: ./scripts/Publish.ps1
       - uses: actions/upload-artifact@v4

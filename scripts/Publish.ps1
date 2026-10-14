@@ -10,9 +10,9 @@ $outputPath = Join-Path $repository "artifacts/$Runtime"
 
 & dotnet test (Join-Path $repository 'Lantern.Tests/Lantern.Tests.csproj') -c Release
 if ($LASTEXITCODE -ne 0) { throw 'Backend tests failed.' }
-& dotnet publish (Join-Path $repository 'Lantern/Lantern.csproj') -c Release -r $Runtime --self-contained true -p:PublishSingleFile=true -p:Version=$Version -o (Join-Path $outputPath 'app')
+& dotnet publish (Join-Path $repository 'Lantern/Lantern.csproj') -c Release -r $Runtime --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=embedded -p:Version=$Version -o (Join-Path $outputPath 'app')
 if ($LASTEXITCODE -ne 0) { throw 'Application publish failed.' }
-& dotnet publish (Join-Path $repository 'Lantern.Harness/Lantern.Harness.csproj') -c Release -r $Runtime --self-contained true -p:PublishSingleFile=true -p:Version=$Version -o (Join-Path $outputPath 'cli')
+& dotnet publish (Join-Path $repository 'Lantern.Harness/Lantern.Harness.csproj') -c Release -r $Runtime --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=embedded -p:Version=$Version -o (Join-Path $outputPath 'cli')
 if ($LASTEXITCODE -ne 0) { throw 'CLI publish failed.' }
 Compress-Archive -Path (Join-Path $outputPath 'app/*'), (Join-Path $outputPath 'cli') -DestinationPath (Join-Path $repository "artifacts/Lantern-$Version-$Runtime.zip") -Force
 if ($BuildInstaller) {

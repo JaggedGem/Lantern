@@ -15,6 +15,8 @@ The UI integration preserves the remote backend at `0847044`; its only applicati
 
 The contrast repair replaces native controls' inconsistent light painting with explicit WinForms renderers and paired palettes. The minimum tested text contrast is 5.16:1 in dark mode and 5.36:1 in light mode; control boundaries exceed 3:1. Native Windows regression tests check theme switching, late-added inputs, disabled buttons, dropdown/tab pixels, dialogs and menus, and emit screenshots for the CI artifact. These tests cross-compile successfully; their Windows runtime results are pending observation.
 
+The IDE packaging configurations `SingleExe` and `SingleExeWithRuntime` both build successfully through the normal solution `Build` target with zero warnings/errors. Each win-x64 output directory contains exactly one `Lantern.exe` (517,152 bytes and 116,412,803 bytes in this build). PE headers identify x64 Windows GUI executables. Bundle format 6 manifests show required external .NET/WindowsDesktop 10.0 frameworks in the small variant and bundled .NET/WindowsDesktop 10.0.12 plus WinForms assemblies in the self-contained variant. See `RIDER_BUILDS.md`; Windows/Rider execution remains a separate runtime check.
+
 The historical backend evidence below remains useful; its earlier test counts describe the preceding backend revision.
 
 ## Automated checks
