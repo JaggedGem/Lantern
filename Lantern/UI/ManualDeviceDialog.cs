@@ -5,10 +5,10 @@ namespace Lantern.UI;
 
 internal sealed class ManualDeviceDialog : Form
 {
-    private readonly TextBox _address = new() { Dock = DockStyle.Fill, PlaceholderText = "192.168.1.20", AccessibleName = "Device IP address" };
-    private readonly TextBox _id = new() { Dock = DockStyle.Fill, PlaceholderText = "Device ID from the other PC's Settings", AccessibleName = "Device ID" };
-    private readonly TextBox _name = new() { Dock = DockStyle.Fill, Text = "My other PC", MaxLength = 128, AccessibleName = "Device name" };
-    private readonly NumericUpDown _port = new() { Minimum = 1, Maximum = 65535, Value = 52846, AccessibleName = "Device TCP port" };
+    private readonly TextBox _address = new ThemedTextBox() { Dock = DockStyle.Fill, PlaceholderText = "192.168.1.20", AccessibleName = "Device IP address" };
+    private readonly TextBox _id = new ThemedTextBox() { Dock = DockStyle.Fill, PlaceholderText = "Device ID from the other PC's Settings", AccessibleName = "Device ID" };
+    private readonly TextBox _name = new ThemedTextBox() { Dock = DockStyle.Fill, Text = "My other PC", MaxLength = 128, AccessibleName = "Device name" };
+    private readonly NumericUpDown _port = new ThemedNumericUpDown() { Minimum = 1, Maximum = 65535, Value = 52846, AccessibleName = "Device TCP port" };
     private readonly Label _error = Ui.Label(Ui.Text("Text"));
     public Device? Device { get; private set; }
 
@@ -23,7 +23,7 @@ internal sealed class ManualDeviceDialog : Form
         layout.Controls.Add(guide, 0, 0);
         layout.Controls.Add(_name, 0, 1); layout.Controls.Add(_id, 0, 2); layout.Controls.Add(_address, 0, 3);
         layout.Controls.Add(Ui.Toolbar(new Label { Text = "TCP port", AutoSize = true, Margin = new Padding(0, 8, 16, 8) }, _port), 0, 4);
-        _error.ForeColor = Color.Firebrick; layout.Controls.Add(_error, 0, 5);
+        Theme.SetRole(_error, ThemeRole.Danger); layout.Controls.Add(_error, 0, 5);
         var add = Ui.Button(Ui.Text("Add_device"), (_, _) => AddDevice(), true);
         var cancel = Ui.Button(Ui.Text("Cancel"), (_, _) => { DialogResult = DialogResult.Cancel; Close(); });
         layout.Controls.Add(Ui.Toolbar(add, cancel), 0, 6); Controls.Add(layout);

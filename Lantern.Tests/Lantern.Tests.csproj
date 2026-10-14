@@ -11,6 +11,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Lantern.Core/Lantern.Core.csproj" />
+    <Compile Include="../Lantern/UI/ThemePalette.cs" Link="UI/ThemePalette.cs" />
   </ItemGroup>
 
   <ItemGroup>

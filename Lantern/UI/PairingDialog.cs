@@ -4,8 +4,8 @@ namespace Lantern.UI;
 
 internal sealed class PairingDialog : Form
 {
-    private readonly TextBox _peerId = new() { Dock = DockStyle.Fill, AccessibleName = "Peer device ID" };
-    private readonly TextBox _pin = new() { Dock = DockStyle.Fill, Multiline = true, Height = 66, AccessibleName = "Verified peer fingerprint" };
+    private readonly TextBox _peerId = new ThemedTextBox() { Dock = DockStyle.Fill, AccessibleName = "Peer device ID" };
+    private readonly TextBox _pin = new ThemedTextBox() { Dock = DockStyle.Fill, Multiline = true, Height = 66, AccessibleName = "Verified peer fingerprint" };
     private readonly Label _error = Ui.Label(Ui.Text("Text"));
     public Guid PeerId { get; private set; }
     public string PeerFingerprint { get; private set; } = "";
@@ -19,11 +19,11 @@ internal sealed class PairingDialog : Form
         layout.Controls.Add(Ui.Label(Ui.Text("Pair_on_both_PCs"), true), 0, 0);
         var guide = Ui.Label(Ui.Text("Exchange_device_IDs_and_fingerprints_with_the_other_person_through_a_truste"));
         guide.MaximumSize = new Size(640, 0); layout.Controls.Add(guide, 0, 1);
-        layout.Controls.Add(new TextBox { Text = $"This PC's device ID:\r\n{localId:D}\r\n\r\nSHA-256 fingerprint:\r\n{Ui.Fingerprint(localFingerprint)}", ReadOnly = true, Multiline = true, Height = 128, Dock = DockStyle.Fill, AccessibleName = "Local pairing identity" }, 0, 2);
+        layout.Controls.Add(new ThemedTextBox { Text = $"This PC's device ID:\r\n{localId:D}\r\n\r\nSHA-256 fingerprint:\r\n{Ui.Fingerprint(localFingerprint)}", ReadOnly = true, Multiline = true, Height = 128, Dock = DockStyle.Fill, AccessibleName = "Local pairing identity" }, 0, 2);
         layout.Controls.Add(Ui.Label(Ui.Text("Other_PC_s_device_ID")), 0, 3);
         _peerId.Text = device?.Id.ToString("D") ?? ""; layout.Controls.Add(_peerId, 0, 4);
         layout.Controls.Add(Ui.Label(Ui.Text("Other_PC_s_verified_SHA_256_fingerprint")), 0, 5); layout.Controls.Add(_pin, 0, 6);
-        _error.ForeColor = Color.Firebrick; layout.Controls.Add(_error, 0, 7);
+        Theme.SetRole(_error, ThemeRole.Danger); layout.Controls.Add(_error, 0, 7);
         var save = Ui.Button(Ui.Text("Trust_verified_identity"), (_, _) => Save(localId), true);
         var cancel = Ui.Button(Ui.Text("Cancel"), (_, _) => { DialogResult = DialogResult.Cancel; Close(); });
         layout.Controls.Add(Ui.Toolbar(save, cancel), 0, 8);

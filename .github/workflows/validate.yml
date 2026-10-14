@@ -21,7 +21,9 @@ jobs:
         if: always()
         with:
           name: test-results-${{ matrix.os }}
-          path: '**/TestResults/*.trx'
+          path: |
+            **/TestResults/*.trx
+            **/TestResults/theme-*.png
   package:
     runs-on: windows-latest
     steps:

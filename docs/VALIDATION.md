@@ -6,12 +6,14 @@ Verified in the managed Linux workspace on 2026-10-14 with .NET SDK 10.0.401/run
 
 The UI integration preserves the remote backend at `0847044`; its only application-core behavior change is the validated, backward-compatible system/light/dark theme preference. All previous backend regression cases remain.
 
-- The final portable Release suite passes **327 cases**, with zero failures and zero skips (322 existing cases plus five desktop preference cases).
-- The complete Release solution, including the WinForms app and three Windows STA UI workflow tests, builds with warnings treated as errors: **zero warnings and zero errors**.
+- The portable Release suite passes **374 cases**, with zero failures and zero skips (322 existing cases, five desktop preference cases and 47 contrast/hierarchy cases).
+- The complete Release solution, including the WinForms app, three Windows STA workflow tests and three theme-rendering regression tests, builds with warnings treated as errors: **zero warnings and zero errors**.
 - Updated self-contained single-file **win-x64 application publishing succeeds**.
 - `git diff --check` is clean. No UI logic placeholders remain.
 - Native UI workflows cover settings/theme restart, explicit pairing and nested folder sending, and incoming acceptance/destination choice/rejection. They are cross-compiled here and configured for Windows CI; they have **not been executed locally** because this executor is Linux. External CI results have not been observed.
 - Desktop handlers now include tray/notifications, startup changes, themes, diagnostics, per-monitor DPI, keyboard actions, resource-backed static labels and clean asynchronous shutdown. See `UI.md`.
+
+The contrast repair replaces native controls' inconsistent light painting with explicit WinForms renderers and paired palettes. The minimum tested text contrast is 5.16:1 in dark mode and 5.36:1 in light mode; control boundaries exceed 3:1. Native Windows regression tests check theme switching, late-added inputs, disabled buttons, dropdown/tab pixels, dialogs and menus, and emit screenshots for the CI artifact. These tests cross-compile successfully; their Windows runtime results are pending observation.
 
 The historical backend evidence below remains useful; its earlier test counts describe the preceding backend revision.
 

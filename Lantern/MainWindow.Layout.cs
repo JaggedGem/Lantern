@@ -4,34 +4,35 @@ namespace Lantern;
 
 public partial class MainWindow
 {
-    private readonly TabControl _tabs = new() { Dock = DockStyle.Fill, Padding = new Point(22, 12), DrawMode = TabDrawMode.OwnerDrawFixed, AccessibleName = "Main navigation" };
+    private readonly TabControl _tabs = new ThemedTabControl() { Dock = DockStyle.Fill, Padding = new Point(22, 12), AccessibleName = "Main navigation" };
     private readonly Label _identityLabel = Ui.Label(Ui.Text("Starting_Lantern"));
     private readonly Label _networkStatus = Ui.Label(Ui.Text("Starting_network_services"));
     private readonly Label _deviceHint = Ui.Label(Ui.Text("Looking_for_Lantern_devices_on_your_local_network"));
-    private readonly TextBox _search = new() { Width = 270, PlaceholderText = "Search devices", AccessibleName = "Search nearby devices", Margin = new Padding(0, 4, 14, 4) };
+    private readonly TextBox _search = new ThemedTextBox() { Width = 270, PlaceholderText = "Search devices", AccessibleName = "Search nearby devices", Margin = new Padding(0, 4, 14, 4) };
     private readonly ListView _devices = Ui.List(("Device", 290), ("Status", 115), ("Pairing", 145), ("Connection", 170), ("Last seen", 130));
     private readonly ListView _files = Ui.List(("File", 340), ("Size", 110), ("Location", 480));
-    private readonly ComboBox _recipient = new() { Width = 350, DropDownStyle = ComboBoxStyle.DropDownList, DisplayMember = "Name", AccessibleName = "Recipient", Margin = new Padding(0, 3, 14, 0) };
+    private readonly ComboBox _recipient = new ThemedComboBox() { Width = 350, DropDownStyle = ComboBoxStyle.DropDownList, DisplayMember = "Name", AccessibleName = "Recipient", Margin = new Padding(0, 3, 14, 0) };
     private readonly Label _fileHint = Ui.Label(Ui.Text("No_files_selected_Add_files_or_drop_them_here"));
     private readonly ListView _activity = Ui.List(("Files", 250), ("Device", 160), ("Direction", 85), ("Status", 135), ("Progress", 175), ("Started", 140));
-    private readonly ProgressBar _transferProgress = new() { Dock = DockStyle.Fill, Height = 14, AccessibleName = "Selected transfer progress", Margin = new Padding(0, 0, 0, 10) };
+    private readonly ProgressBar _transferProgress = new ThemedProgressBar() { Dock = DockStyle.Fill, Height = 14, AccessibleName = "Selected transfer progress", Margin = new Padding(0, 0, 0, 10) };
     private readonly Label _activityHint = Ui.Label(Ui.Text("Your_transfers_will_appear_here"));
-    private readonly TextBox _deviceName = new() { Dock = DockStyle.Fill, MaxLength = 128, AccessibleName = "This device's name" };
-    private readonly TextBox _receiveFolder = new() { Dock = DockStyle.Fill, AccessibleName = "Receive folder" };
-    private readonly NumericUpDown _port = new() { Minimum = 0, Maximum = 65535, Width = 130, AccessibleName = "TCP listening port" };
-    private readonly CheckBox _notifications = new() { Text = "Show transfer notifications", AutoSize = true };
-    private readonly CheckBox _minimizeToTray = new() { Text = "Keep running in tray when closed or minimized", AutoSize = true };
-    private readonly CheckBox _startWithWindows = new() { Text = "Start Lantern when I sign in to Windows", AutoSize = true };
-    private readonly ComboBox _theme = new() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 160, AccessibleName = "Theme" };
+    private readonly TextBox _deviceName = new ThemedTextBox() { Dock = DockStyle.Fill, MaxLength = 128, AccessibleName = "This device's name" };
+    private readonly TextBox _receiveFolder = new ThemedTextBox() { Dock = DockStyle.Fill, AccessibleName = "Receive folder" };
+    private readonly NumericUpDown _port = new ThemedNumericUpDown() { Minimum = 0, Maximum = 65535, Width = 130, AccessibleName = "TCP listening port" };
+    private readonly CheckBox _notifications = new ThemedCheckBox() { Text = "Show transfer notifications", AutoSize = true };
+    private readonly CheckBox _minimizeToTray = new ThemedCheckBox() { Text = "Keep running in tray when closed or minimized", AutoSize = true };
+    private readonly CheckBox _startWithWindows = new ThemedCheckBox() { Text = "Start Lantern when I sign in to Windows", AutoSize = true };
+    private readonly ComboBox _theme = new ThemedComboBox() { DropDownStyle = ComboBoxStyle.DropDownList, Width = 160, AccessibleName = "Theme" };
     private readonly Label _localId = Ui.Label(Ui.Text("Loading_installation_identity"));
-    private readonly CheckBox _discoveryEnabled = new() { Text = "Find and announce devices on the local network", AutoSize = true, Checked = true, AccessibleName = "Enable LAN discovery" };
-    private readonly TextBox _fingerprint = new() { ReadOnly = true, Multiline = true, Height = 70, Dock = DockStyle.Fill, AccessibleName = "This device's certificate fingerprint" };
+    private readonly CheckBox _discoveryEnabled = new ThemedCheckBox() { Text = "Find and announce devices on the local network", AutoSize = true, Checked = true, AccessibleName = "Enable LAN discovery" };
+    private readonly TextBox _fingerprint = new ThemedTextBox() { ReadOnly = true, Multiline = true, Height = 70, Dock = DockStyle.Fill, AccessibleName = "This device's certificate fingerprint" };
     private readonly Label _settingsHint = Ui.Label(Ui.Text("Every_incoming_transfer_requires_your_approval"));
     private Button _sendButton = null!, _removeFileButton = null!, _chooseDeviceButton = null!, _cancelButton = null!, _openTransferButton = null!, _retryButton = null!, _saveSettingsButton = null!;
 
     private void BuildLayout()
     {
         var root = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3, Padding = new Padding(20), BackColor = BackColor };
+        Theme.SetRole(root, ThemeRole.Canvas);
         root.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         root.RowStyles.Add(Ui.Auto()); root.RowStyles.Add(Ui.Fill()); root.RowStyles.Add(Ui.Auto());
         var header = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 2, AutoSize = true, Padding = new Padding(4, 0, 4, 12) };
@@ -51,14 +52,6 @@ public partial class MainWindow
         root.Controls.Add(footer, 0, 2);
         Controls.Add(root);
         BuildNearbyPage(); BuildSendPage(); BuildActivityPage(); BuildSettingsPage();
-        _tabs.DrawItem += (_, e) =>
-        {
-            var selected = e.Index == _tabs.SelectedIndex;
-            using var brush = new SolidBrush(selected ? Ui.Accent : _tabs.BackColor);
-            e.Graphics.FillRectangle(brush, e.Bounds);
-            TextRenderer.DrawText(e.Graphics, _tabs.TabPages[e.Index].Text, Font, e.Bounds,
-                selected ? Color.White : _tabs.ForeColor, TextFormatFlags.HorizontalCenter | TextFormatFlags.VerticalCenter);
-        };
         _search.TextChanged += (_, _) => RenderDevices();
         _devices.SelectedIndexChanged += (_, _) => UpdateActions();
         _devices.DoubleClick += async (_, _) => await ChooseDeviceAsync();
@@ -73,7 +66,7 @@ public partial class MainWindow
 
     private TabPage AddPage(string title, TableLayoutPanel layout, bool scroll = false)
     {
-        var page = new TabPage(title) { BackColor = Color.White, Padding = new Padding(0) };
+        var page = new TabPage(title) { BackColor = ThemePalette.Light.Surface, UseVisualStyleBackColor = false, Padding = new Padding(0) };
         if (scroll) { page.AutoScroll = true; layout.Dock = DockStyle.Top; layout.AutoSize = true; layout.AutoSizeMode = AutoSizeMode.GrowAndShrink; }
         page.Controls.Add(layout); _tabs.TabPages.Add(page); return page;
     }
@@ -141,7 +134,7 @@ public partial class MainWindow
         page.Controls.Add(_localId, 0, 3);
         page.Controls.Add(Ui.Label(Ui.Text("Pair_both_PCs_using_their_device_IDs_and_verified_fingerprints_File_transfe")), 0, 4);
         page.Controls.Add(_fingerprint, 0, 5);
-        var help = new TextBox { ReadOnly = true, Multiline = true, BorderStyle = BorderStyle.None, Dock = DockStyle.Fill, BackColor = Color.White,
+        var help = new ThemedTextBox { ReadOnly = true, Multiline = true, BorderStyle = BorderStyle.None, Dock = DockStyle.Fill,
             ScrollBars = ScrollBars.Vertical, AccessibleName = "Security and connection help",
             Text = "Only paired identities can transfer files. Accept only an expected transfer; discovery names are self-reported. Received files are never opened automatically.\r\n\r\nDevices missing? Check that both PCs use the same subnet and that Windows Firewall allows Lantern on private networks (UDP 52845 and your TCP port). You can also add a device by its IP address.\r\n\r\nLantern • Local file sharing • .NET 10 / Windows" };
         help.Margin = new Padding(0, 20, 0, 14); page.Controls.Add(help, 0, 6);

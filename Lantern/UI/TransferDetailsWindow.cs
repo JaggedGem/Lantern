@@ -4,8 +4,8 @@ namespace Lantern.UI;
 
 internal sealed class TransferDetailsWindow : Form
 {
-    private readonly TextBox _details = new() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AccessibleName = "Transfer details" };
-    private readonly ProgressBar _progress = new() { Dock = DockStyle.Fill, AccessibleName = "Transfer progress", Height = 18 };
+    private readonly TextBox _details = new ThemedTextBox() { Multiline = true, ReadOnly = true, ScrollBars = ScrollBars.Vertical, Dock = DockStyle.Fill, AccessibleName = "Transfer details" };
+    private readonly ProgressBar _progress = new ThemedProgressBar() { Dock = DockStyle.Fill, AccessibleName = "Transfer progress", Height = 18 };
     private readonly Button _cancel;
     public TransferDetailsWindow(TransferRow transfer, Action<Guid> cancel)
     {

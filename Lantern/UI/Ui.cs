@@ -5,26 +5,30 @@ internal static class Ui
     private static readonly System.Resources.ResourceManager Resources = new("Lantern.Resources.Strings", typeof(Ui).Assembly);
     public static string Text(string key) => Resources.GetString(key, System.Globalization.CultureInfo.CurrentUICulture) ?? key;
 
-    public static readonly Color Ink = Color.FromArgb(26, 40, 62);
-    public static readonly Color Accent = Color.FromArgb(38, 91, 207);
-    public static readonly Color Muted = Color.FromArgb(88, 102, 121);
+    public static readonly Color Ink = ThemePalette.Light.Text;
+    public static readonly Color Accent = ThemePalette.Light.Primary;
 
     public static Button Button(string text, EventHandler handler, bool primary = false)
     {
-        var button = new Button { Text = text, AutoSize = true, MinimumSize = new Size(100, 36), Padding = new Padding(10, 3, 10, 3),
-            FlatStyle = FlatStyle.Flat, BackColor = primary ? Accent : Color.White, ForeColor = primary ? Color.White : Ink,
+        var button = new ThemedButton { Primary = primary, Text = text, AutoSize = true, MinimumSize = new Size(104, 40), Padding = new Padding(14, 5, 14, 5),
+            FlatStyle = FlatStyle.Flat, BackColor = primary ? Accent : ThemePalette.Light.Surface, ForeColor = primary ? ThemePalette.Light.OnPrimary : Ink,
             Cursor = Cursors.Hand, Margin = new Padding(0, 0, 10, 0), AccessibleName = text.Replace("&", "") };
-        button.FlatAppearance.BorderColor = primary ? Accent : Color.FromArgb(205, 214, 226);
+        button.FlatAppearance.BorderColor = primary ? Accent : ThemePalette.Light.Border;
         button.Click += handler;
         return button;
     }
 
-    public static Label Label(string text, bool title = false) => new()
+    public static Label Label(string text, bool title = false)
     {
-        Text = text, UseMnemonic = false, AutoSize = true, ForeColor = title ? Ink : Muted, Dock = DockStyle.Fill,
-        Font = new Font("Segoe UI", title ? 17 : 10, title ? FontStyle.Bold : FontStyle.Regular),
-        Margin = new Padding(0, 0, 0, 12)
-    };
+        var label = new Label
+        {
+            Text = text, UseMnemonic = false, AutoSize = true, Dock = DockStyle.Fill,
+            Font = new Font("Segoe UI", title ? 17 : 10, title ? FontStyle.Bold : FontStyle.Regular),
+            Margin = new Padding(0, 0, 0, 12)
+        };
+        Theme.SetRole(label, title ? ThemeRole.Default : ThemeRole.Muted);
+        return label;
+    }
 
     public static FlowLayoutPanel Toolbar(params Control[] controls)
     {
@@ -35,15 +39,16 @@ internal static class Ui
 
     public static ListView List(params (string Name, int Width)[] columns)
     {
-        var list = new ListView { Dock = DockStyle.Fill, View = View.Details, FullRowSelect = true, HideSelection = false,
-            MultiSelect = false, ShowItemToolTips = true, BorderStyle = BorderStyle.FixedSingle, BackColor = Color.White, ForeColor = Ink, Margin = new Padding(0, 0, 0, 14) };
+        var list = new ThemedListView { Dock = DockStyle.Fill, View = View.Details, FullRowSelect = true, HideSelection = false,
+            MultiSelect = false, ShowItemToolTips = true, BorderStyle = BorderStyle.FixedSingle, BackColor = ThemePalette.Light.Surface, ForeColor = Ink, Margin = new Padding(0, 0, 0, 14) };
         foreach (var column in columns) list.Columns.Add(column.Name, column.Width);
         return list;
     }
 
     public static TableLayoutPanel Page(params RowStyle[] rows)
     {
-        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(24), RowCount = rows.Length, BackColor = Color.White };
+        var panel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, Padding = new Padding(24), RowCount = rows.Length, BackColor = ThemePalette.Light.Surface };
+        Theme.SetRole(panel, ThemeRole.Surface);
         panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         foreach (var row in rows) panel.RowStyles.Add(row);
         return panel;

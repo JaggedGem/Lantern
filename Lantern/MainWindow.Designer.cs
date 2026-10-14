@@ -29,7 +29,7 @@ public partial class MainWindow
         MinimumSize = new Size(980, 700);
         StartPosition = FormStartPosition.CenterScreen;
         Text = "Lantern — Share nearby";
-        BackColor = Color.FromArgb(243, 246, 251);
+        BackColor = UI.ThemePalette.Light.Canvas;
         ForeColor = UI.Ui.Ink;
         KeyPreview = true;
         BuildLayout();

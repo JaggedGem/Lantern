@@ -47,7 +47,7 @@ public partial class MainWindow : Form
         try { _settings = await Task.Run(_settingsStore.Load); }
         catch (Exception ex) when (IsUserError(ex)) { ShowError("Settings could not be loaded. Save corrected settings to replace them.", ex); }
         if (_closing) return;
-        LoadSettingsFields(); CreateTray(); Theme.Apply(this, _settings.Theme);
+        LoadSettingsFields(); CreateTray(); ApplyAppearance();
         await RestartServicesAsync();
         if (_closing) return;
         _refreshTimer = new System.Windows.Forms.Timer(components!) { Interval = 3000 };
@@ -82,7 +82,7 @@ public partial class MainWindow : Form
             application.DevicesChanged += (_, _) => Post(RefreshDevices);
             application.Transfers.TransferChanged += (_, args) => Post(() => OnTransferChanged(args));
             application.Transfers.IncomingTransferRequested += (_, request) => Post(() => _ = PresentIncomingAsync(request));
-            application.Error += (_, error) => Post(() => { _networkStatus.Text = $"Last issue: {error.Message}"; });
+            application.Error += (_, error) => Post(() => { _networkStatus.Text = $"Last issue: {error.Message}"; Theme.SetRole(_networkStatus, ThemeRole.Danger); });
             application.NotificationRequested += (_, args) => Post(() => NotifyTransfer(args));
             await application.StartAsync(_lifetime.Token);
             if (_closing) return;
@@ -97,14 +97,14 @@ public partial class MainWindow : Form
                 var row = TransferRow.From(entry, PeerName(peerId)); _transfers[row.Id] = row; RenderTransfer(row);
             }
             _networkStatus.Text = $"Ready • TCP {application.LocalDevice.Port} • {(_settings.DiscoveryEnabled ? "LAN discovery on" : "Discovery off — add devices by IP")}";
-            _networkStatus.ForeColor = Ui.Muted; _retryButton.Visible = false;
+            Theme.SetRole(_networkStatus, ThemeRole.Muted); _retryButton.Visible = false;
             RefreshDevices();
         }
         catch (Exception ex) when (IsUserError(ex))
         {
             await StopApplicationAsync();
             _networkStatus.Text = $"Network unavailable: {ex.Message}";
-            _networkStatus.ForeColor = Color.Firebrick; _retryButton.Visible = true;
+            Theme.SetRole(_networkStatus, ThemeRole.Danger); _retryButton.Visible = true;
         }
         finally
         {
@@ -300,7 +300,7 @@ public partial class MainWindow : Form
         if (item is null) { item = new ListViewItem(values) { Name = transfer.Id.ToString(), Tag = transfer }; _activity.Items.Insert(0, item); }
         else { for (var i = 0; i < values.Length; i++) item.SubItems[i].Text = values[i]; item.Tag = transfer; }
         item.ToolTipText = transfer.Error ?? transfer.Files;
-        item.ForeColor = transfer.State == TransferStatus.Failed ? Color.FromArgb(195, 74, 74) : transfer.State == TransferStatus.Completed ? Color.FromArgb(47, 151, 102) : _activity.ForeColor;
+        item.ForeColor = Theme.ItemForeground(item, Theme.PaletteFor(_activity));
     }
     private TransferRow? SelectedTransfer => _activity.SelectedItems.Count > 0 ? _activity.SelectedItems[0].Tag as TransferRow : null;
     private void CancelSelectedTransfer() { if (SelectedTransfer is { IsFinished: false } transfer) _application?.Transfers.Cancel(transfer.Id); }
@@ -377,8 +377,7 @@ public partial class MainWindow : Form
                 }
                 else _settingsStore.Save(updated);
             });
-            _settings = updated; Theme.Apply(this, updated.Theme);
-            foreach (var window in OwnedForms) Theme.Apply(window, updated.Theme);
+            _settings = updated; ApplyAppearance();
             await RestartServicesAsync(); _settingsHint.Text = "Settings saved. Every incoming transfer requires your approval.";
         }
         catch (Exception ex) when (IsUserError(ex)) { ShowError("Settings could not be saved.", ex); }
@@ -418,7 +417,7 @@ public partial class MainWindow : Form
         var data = application.GetDiagnostics();
         using var dialog = new Form { Text = "Lantern diagnostics", ClientSize = new Size(720, 450), Font = Font, StartPosition = FormStartPosition.CenterParent };
         var layout = Ui.Page(Ui.Fill(), Ui.Auto());
-        layout.Controls.Add(new TextBox { ReadOnly = true, Multiline = true, Dock = DockStyle.Fill, ScrollBars = ScrollBars.Vertical,
+        layout.Controls.Add(new ThemedTextBox { ReadOnly = true, Multiline = true, Dock = DockStyle.Fill, ScrollBars = ScrollBars.Vertical,
             Text = $"Device: {data.DeviceId:D}\r\nListening port: {data.ListeningPort}\r\nDiscovery: {data.DiscoveryRunning}\r\nKnown devices: {data.KnownDevices}\r\nActive transfers: {data.ActiveTransfers}\r\nHistory: {data.HistoryEntries}\r\nCertificate expires: {data.CertificateExpiresAt.ToLocalTime():g}\r\n\r\nSHA-256: {Ui.Fingerprint(data.CertificateFingerprint)}\r\n\r\nLog: {data.LogPath}" }, 0, 0);
         layout.Controls.Add(Ui.Toolbar(Ui.Button("Open logs folder", async (_, _) => await OpenFolderAsync(Path.GetDirectoryName(data.LogPath)!)), Ui.Button("Close", (_, _) => dialog.Close())), 0, 1);
         dialog.Controls.Add(layout); Theme.Apply(dialog, _settings.Theme); dialog.ShowDialog(this);
@@ -434,13 +433,15 @@ public partial class MainWindow : Form
         catch (Exception ex) when (IsUserError(ex) || ex is System.ComponentModel.Win32Exception) { ShowError("Could not open the folder.", ex); }
     }
 
-    private void OnSystemPreferenceChanged(object sender, Microsoft.Win32.UserPreferenceChangedEventArgs args) => Post(() =>
+    private void ApplyAppearance()
     {
-        if (_settings.Theme != "System") return;
         Theme.Apply(this, _settings.Theme);
         foreach (var window in OwnedForms) Theme.Apply(window, _settings.Theme);
+        if (_tray?.ContextMenuStrip is { } menu) Theme.Apply(menu, _settings.Theme);
         foreach (var transfer in _transfers.Values) RenderTransfer(transfer);
-    });
+    }
+
+    private void OnSystemPreferenceChanged(object sender, Microsoft.Win32.UserPreferenceChangedEventArgs args) => Post(ApplyAppearance);
 
     private void CreateTray()
     {

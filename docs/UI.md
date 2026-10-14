@@ -15,8 +15,16 @@ The Windows Forms host uses `LanternApplication` for lifetime, discovery snapsho
 
 Keyboard shortcuts: `Ctrl+O` adds files, `Delete` removes the selected file, `F5` refreshes devices, `Ctrl+,` selects settings, and `Ctrl+Q` exits. Native tab navigation, accessible control names, per-monitor DPI scaling, table/flow layouts and a scrollable settings view are implemented. English static labels/buttons are backed by `Resources/Strings.resx`; dynamic messages remain English and no translated locale is claimed.
 
+## Appearance and contrast
+
+All UI remains exclusively Windows Forms. Light and dark palettes define paired colors for canvas, content, raised surfaces, inputs, selected rows, primary/hover/pressed/disabled buttons, secondary text, errors and success. Dark mode uses slate surfaces and a soft blue accent; light mode uses white content on a cool gray canvas. Text states exceed 5:1 contrast in both palettes, and input boundaries exceed 3:1. Windows high-contrast colors take precedence over the application preference.
+
+Native WinForms subclasses explicitly paint tab strips, list headers/rows, dropdown items/arrows, buttons, checkboxes, progress tracks, input placeholders/borders and numeric spinner arrows. This avoids native light backgrounds being combined with custom light text. Keyboard, selection, accessibility and transfer behavior remain inherited from the original WinForms controls. The theme also covers tray menus and supported Windows title bars. OS-owned file pickers and message boxes retain Windows' own rendering.
+
+Theme roles preserve muted, error and success colors through refreshes and repeated light/dark switching. Controls added after initial theme application inherit the active palette. Palette selection never depends on reading a control's previous background color.
+
 ## Verification
 
-The portable suite covers the existing backend plus desktop preference persistence/defaults/validation. `Lantern.UiTests` runs a real STA Windows message loop and covers settings restart/theme persistence, pairing and sending a nested folder, and accepting/declining incoming transfers with destination choice. The native UI suite is compiled on Linux and configured to execute on Windows CI. Do not report it as locally executed on Linux.
+The portable suite covers the existing backend, desktop preferences and 47 palette contrast/hierarchy checks using the actual UI palette source. `Lantern.UiTests` runs a real STA Windows message loop and covers settings restart/theme persistence, pairing and sending a nested folder, and accepting/declining incoming transfers with destination choice. Native rendering regressions additionally exercise theme round trips, late-added controls, enabled/disabled buttons, dropdown/tab pixels, dialog fields and menus. Windows CI retains light/dark screenshots under the test-results artifact. The native UI suite is compiled on Linux and configured to execute on Windows CI. Do not report it as locally executed on Linux.
 
 Before release, run Windows workflows at 100%, 125%, 150% and 200% DPI and across monitors. Check keyboard focus, screen-reader output, dark/system contrast, tray close/restore, notification policy, per-user startup registration, unexpected shutdown, physical two-PC pairing and LAN/firewall behavior. Execute installer/uninstaller and signing checks. These are runtime verification gates, not missing UI handlers.
