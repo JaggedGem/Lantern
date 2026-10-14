@@ -7,7 +7,14 @@ namespace Lantern.Networking.Protocol;
 public enum MessageType
 {
     Hello = 1,
-    Error = 2
+    Error = 2,
+    TransferRequest = 3,
+    TransferAccepted = 4,
+    TransferRejected = 5,
+    FileChunk = 6,
+    FileComplete = 7,
+    TransferComplete = 8,
+    TransferAcknowledged = 9
 }
 
 [JsonConverter(typeof(MessageIdJsonConverter))]
@@ -34,7 +41,7 @@ public abstract record MessagePayload;
 
 public sealed record HelloPayload : MessagePayload
 {
-    public HelloPayload(string applicationName, int protocolVersion)
+    public HelloPayload(string applicationName, int protocolVersion, Guid? deviceId = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(applicationName);
 
@@ -43,9 +50,13 @@ public sealed record HelloPayload : MessagePayload
             throw new ArgumentOutOfRangeException(nameof(protocolVersion), protocolVersion, "The protocol version must be greater than zero.");
         }
 
+        if (deviceId == Guid.Empty) throw new ArgumentException("Empty peer identity.", nameof(deviceId));
+        DeviceId = deviceId;
         ApplicationName = applicationName;
         ProtocolVersion = protocolVersion;
     }
+
+    public Guid? DeviceId { get; }
 
     public string ApplicationName { get; }
 
@@ -109,6 +120,13 @@ internal static class MessagePayloadKindHelper
         {
             HelloPayload => MessageType.Hello,
             ErrorPayload => MessageType.Error,
+            TransferRequestPayload => MessageType.TransferRequest,
+            TransferAcceptedPayload => MessageType.TransferAccepted,
+            TransferRejectedPayload => MessageType.TransferRejected,
+            FileChunkPayload => MessageType.FileChunk,
+            FileCompletePayload => MessageType.FileComplete,
+            TransferCompletePayload => MessageType.TransferComplete,
+            TransferAcknowledgedPayload => MessageType.TransferAcknowledged,
             _ => throw new NotSupportedException($"Unsupported payload type '{payload.GetType().FullName}'.")
         };
 

@@ -2,6 +2,9 @@ namespace Lantern.UI;
 
 internal static class Ui
 {
+    private static readonly System.Resources.ResourceManager Resources = new("Lantern.Resources.Strings", typeof(Ui).Assembly);
+    public static string Text(string key) => Resources.GetString(key, System.Globalization.CultureInfo.CurrentUICulture) ?? key;
+
     public static readonly Color Ink = Color.FromArgb(26, 40, 62);
     public static readonly Color Accent = Color.FromArgb(38, 91, 207);
     public static readonly Color Muted = Color.FromArgb(88, 102, 121);
@@ -55,5 +58,12 @@ internal static class Ui
         while (value >= 1024 && unit < units.Length - 1) { value /= 1024; unit++; }
         return $"{value:0.##} {units[unit]}";
     }
+    public static string Status(Models.TransferStatus status) => status switch
+    {
+        Models.TransferStatus.WaitingForAcceptance => "Awaiting approval",
+        Models.TransferStatus.Pending => "Preparing",
+        Models.TransferStatus.Cancelled => "Canceled",
+        _ => status.ToString()
+    };
     public static string Fingerprint(string value) => string.Join(" ", Enumerable.Range(0, value.Length / 4).Select(i => value.Substring(i * 4, 4)));
 }

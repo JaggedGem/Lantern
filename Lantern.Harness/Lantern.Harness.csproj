@@ -10,7 +10,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\Lantern.Core\Lantern.Core.csproj" />
+    <ProjectReference Include="../Lantern.Core/Lantern.Core.csproj" />
   </ItemGroup>
 
 </Project>

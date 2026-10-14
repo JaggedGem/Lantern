@@ -1,16 +1,26 @@
+using System.Diagnostics;
+
 namespace Lantern;
 
-static class Program
+internal static class Program
 {
-    /// <summary>
-    ///  The main entry point for the application.
-    /// </summary>
     [STAThread]
-    static void Main()
+    private static void Main()
     {
-        // To customize application configuration such as set high DPI settings or default font,
-        // see https://aka.ms/applicationconfiguration.
+        System.Windows.Forms.Application.SetUnhandledExceptionMode(UnhandledExceptionMode.CatchException);
         ApplicationConfiguration.Initialize();
-        Application.Run(new MainWindow());
+        using var window = new MainWindow();
+        System.Windows.Forms.Application.ThreadException += async (_, args) => await window.HandleUnexpectedErrorAsync(args.Exception);
+        AppDomain.CurrentDomain.UnhandledException += (_, args) =>
+        {
+            try
+            {
+                var directory = Path.Combine(Application.LanternApplication.DefaultDataDirectory, "logs");
+                Directory.CreateDirectory(directory);
+                File.WriteAllText(Path.Combine(directory, $"crash-{DateTime.UtcNow:yyyyMMdd-HHmmss}-{Environment.ProcessId}.log"), args.ExceptionObject.ToString());
+            }
+            catch (Exception loggingError) { Trace.TraceError(loggingError.ToString()); }
+        };
+        System.Windows.Forms.Application.Run(window);
     }
 }

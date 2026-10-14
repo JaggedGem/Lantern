@@ -48,6 +48,7 @@ public class Device
             throw new ArgumentOutOfRangeException(nameof(port), port, "The port must be between 1 and 65535.");
         }
 
+        if (id == Guid.Empty) throw new ArgumentException("The device ID cannot be empty.", nameof(id));
         Id = id;
         Name = name;
         IpAddress = ipAddress;
@@ -91,12 +92,12 @@ public class Device
     }
 
     /// <summary>
-    /// Updates the device's status and refreshes LastSeen.
+    /// Updates availability without claiming a new observation.
     /// </summary>
     public void UpdateStatus(DeviceStatus newStatus)
     {
+        if (!Enum.IsDefined(newStatus)) throw new ArgumentOutOfRangeException(nameof(newStatus));
         Status = newStatus;
-        LastSeen = DateTimeOffset.UtcNow;
     }
 
     /// <summary>
@@ -106,5 +107,21 @@ public class Device
     public void RefreshLastSeen()
     {
         LastSeen = DateTimeOffset.UtcNow;
+    }
+    internal void Observe(string name, IPAddress address, int port, DateTimeOffset seenAt)
+    {
+        UpdateName(name);
+        UpdateIpAddress(address);
+        UpdatePort(port);
+        LastSeen = seenAt;
+        Status = DeviceStatus.Online;
+    }
+
+    internal Device Snapshot()
+    {
+        var address = IpAddress.AddressFamily == System.Net.Sockets.AddressFamily.InterNetworkV6
+            ? new IPAddress(IpAddress.GetAddressBytes(), IpAddress.ScopeId)
+            : new IPAddress(IpAddress.GetAddressBytes());
+        return new Device(Id, Name, address, Port) { LastSeen = LastSeen, Status = Status };
     }
 }

@@ -10,20 +10,19 @@ namespace Lantern.Tests;
 /// Note: True cross-instance discovery requires different machines or network interface simulation.
 /// These tests verify the behavior under realistic conditions.
 /// </summary>
-[Collection("Discovery sockets")]
+[Collection(DiscoveryTestCollection.Name)]
 public sealed class DiscoveryIntegrationTests : IAsyncLifetime
 {
     private DeviceDiscovery? _discovery1;
     private LocalDevice? _localDevice1;
 
-    public Task InitializeAsync()
+    public async Task InitializeAsync()
     {
         // Create local device
         _localDevice1 = new LocalDevice(Guid.NewGuid(), "Device1", 5001);
 
         // Create discovery instance
         _discovery1 = new DeviceDiscovery(_localDevice1);
-        return Task.CompletedTask;
     }
 
     public async Task DisposeAsync()

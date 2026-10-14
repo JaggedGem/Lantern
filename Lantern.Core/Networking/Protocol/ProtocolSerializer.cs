@@ -14,6 +14,7 @@ public sealed class ProtocolSerializer
     {
         _jsonOptions = new JsonSerializerOptions(JsonSerializerDefaults.General)
         {
+            RespectRequiredConstructorParameters = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
             PropertyNameCaseInsensitive = false,
             DefaultIgnoreCondition = JsonIgnoreCondition.Never,
@@ -23,7 +24,7 @@ public sealed class ProtocolSerializer
 #if NET10_0_OR_GREATER
             UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow,
 #endif
-            Encoder = JavaScriptEncoder.Default
+            Encoder = JavaScriptEncoder.Default,
         };
 
         _jsonOptions.Converters.Add(new MessageIdJsonConverter());
@@ -34,12 +35,15 @@ public sealed class ProtocolSerializer
         ArgumentNullException.ThrowIfNull(message);
 
         var buffer = new ArrayBufferWriter<byte>();
-        using var writer = new Utf8JsonWriter(buffer, new JsonWriterOptions
-        {
-            Indented = false,
-            SkipValidation = false,
-            Encoder = JavaScriptEncoder.Default
-        });
+        using var writer = new Utf8JsonWriter(
+            buffer,
+            new JsonWriterOptions
+            {
+                Indented = false,
+                SkipValidation = false,
+                Encoder = JavaScriptEncoder.Default,
+            }
+        );
 
         writer.WriteStartObject();
         writer.WriteNumber("type", (int)message.Type);
@@ -59,11 +63,14 @@ public sealed class ProtocolSerializer
 
         try
         {
-            document = JsonDocument.Parse(utf8Json.ToArray(), new JsonDocumentOptions
-            {
-                CommentHandling = JsonCommentHandling.Disallow,
-                AllowTrailingCommas = false
-            });
+            document = JsonDocument.Parse(
+                utf8Json.ToArray(),
+                new JsonDocumentOptions
+                {
+                    CommentHandling = JsonCommentHandling.Disallow,
+                    AllowTrailingCommas = false,
+                }
+            );
         }
         catch (JsonException ex)
         {
@@ -73,6 +80,18 @@ public sealed class ProtocolSerializer
         using (document)
         {
             var root = document.RootElement;
+            RejectDuplicateProperties(root);
+            if (root.ValueKind != JsonValueKind.Object)
+                throw new JsonException("A protocol message must be an object.");
+            var properties = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in root.EnumerateObject())
+            {
+                if (
+                    property.Name is not ("type" or "id" or "payload")
+                    || !properties.Add(property.Name)
+                )
+                    throw new JsonException("Unknown or duplicate protocol envelope property.");
+            }
 
             if (!root.TryGetProperty("type", out var typeElement))
             {
@@ -97,6 +116,23 @@ public sealed class ProtocolSerializer
         }
     }
 
+    private static void RejectDuplicateProperties(JsonElement element)
+    {
+        if (element.ValueKind == JsonValueKind.Object)
+        {
+            var names = new HashSet<string>(StringComparer.Ordinal);
+            foreach (var property in element.EnumerateObject())
+            {
+                if (!names.Add(property.Name))
+                    throw new JsonException("Duplicate JSON property.");
+                RejectDuplicateProperties(property.Value);
+            }
+        }
+        else if (element.ValueKind == JsonValueKind.Array)
+            foreach (var item in element.EnumerateArray())
+                RejectDuplicateProperties(item);
+    }
+
     private void WritePayload(Utf8JsonWriter writer, MessagePayload payload)
     {
         switch (payload)
@@ -107,8 +143,31 @@ public sealed class ProtocolSerializer
             case ErrorPayload errorPayload:
                 JsonSerializer.Serialize(writer, errorPayload, typeof(ErrorPayload), _jsonOptions);
                 return;
+            case TransferRequestPayload request:
+                JsonSerializer.Serialize(writer, request, _jsonOptions);
+                return;
+            case TransferAcceptedPayload accepted:
+                JsonSerializer.Serialize(writer, accepted, _jsonOptions);
+                return;
+            case TransferRejectedPayload rejected:
+                JsonSerializer.Serialize(writer, rejected, _jsonOptions);
+                return;
+            case FileChunkPayload chunk:
+                JsonSerializer.Serialize(writer, chunk, _jsonOptions);
+                return;
+            case FileCompletePayload fileComplete:
+                JsonSerializer.Serialize(writer, fileComplete, _jsonOptions);
+                return;
+            case TransferCompletePayload complete:
+                JsonSerializer.Serialize(writer, complete, _jsonOptions);
+                return;
+            case TransferAcknowledgedPayload acknowledged:
+                JsonSerializer.Serialize(writer, acknowledged, _jsonOptions);
+                return;
             default:
-                throw new NotSupportedException($"Unsupported payload type '{payload.GetType().FullName}'.");
+                throw new NotSupportedException(
+                    $"Unsupported payload type '{payload.GetType().FullName}'."
+                );
         }
     }
 
@@ -119,12 +178,15 @@ public sealed class ProtocolSerializer
             throw new JsonException("The message type must be a number.");
         }
 
-        var value = element.GetInt32();
+        if (!element.TryGetInt32(out var value))
+            throw new JsonException("The message type must be a 32-bit integer.");
         return value switch
         {
             (int)MessageType.Hello => MessageType.Hello,
             (int)MessageType.Error => MessageType.Error,
-            _ => throw new JsonException($"The message type '{value}' is not supported.")
+            >= (int)MessageType.TransferRequest and <= (int)MessageType.TransferAcknowledged =>
+                (MessageType)value,
+            _ => throw new JsonException($"The message type '{value}' is not supported."),
         };
     }
 
@@ -134,18 +196,36 @@ public sealed class ProtocolSerializer
         {
             return new MessageId(element.GetGuid());
         }
-        catch (Exception ex) when (ex is FormatException or InvalidOperationException or ArgumentException)
+        catch (Exception ex)
+            when (ex is FormatException or InvalidOperationException or ArgumentException)
         {
             throw new JsonException("The message identifier is not a valid GUID.", ex);
         }
     }
 
-    private MessagePayload ReadPayload(MessageType type, JsonElement payloadElement)
-        => type switch
+    private MessagePayload ReadPayload(MessageType type, JsonElement payloadElement) =>
+        type switch
         {
             MessageType.Hello => DeserializePayload<HelloPayload>(payloadElement),
             MessageType.Error => DeserializePayload<ErrorPayload>(payloadElement),
-            _ => throw new JsonException($"The message type '{type}' is not supported.")
+            MessageType.TransferRequest => DeserializePayload<TransferRequestPayload>(
+                payloadElement
+            ),
+            MessageType.TransferAccepted => DeserializePayload<TransferAcceptedPayload>(
+                payloadElement
+            ),
+            MessageType.TransferRejected => DeserializePayload<TransferRejectedPayload>(
+                payloadElement
+            ),
+            MessageType.FileChunk => DeserializePayload<FileChunkPayload>(payloadElement),
+            MessageType.FileComplete => DeserializePayload<FileCompletePayload>(payloadElement),
+            MessageType.TransferComplete => DeserializePayload<TransferCompletePayload>(
+                payloadElement
+            ),
+            MessageType.TransferAcknowledged => DeserializePayload<TransferAcknowledgedPayload>(
+                payloadElement
+            ),
+            _ => throw new JsonException($"The message type '{type}' is not supported."),
         };
 
     private MessagePayload DeserializePayload<TPayload>(JsonElement payloadElement)
@@ -154,16 +234,23 @@ public sealed class ProtocolSerializer
         try
         {
             var payload = payloadElement.Deserialize<TPayload>(_jsonOptions);
-            return payload ?? throw new JsonException($"The payload could not be deserialized as '{typeof(TPayload).Name}'.");
+            return payload
+                ?? throw new JsonException(
+                    $"The payload could not be deserialized as '{typeof(TPayload).Name}'."
+                );
         }
-        catch (Exception ex) when (ex is JsonException or NotSupportedException or InvalidOperationException or ArgumentException)
+        catch (Exception ex)
+            when (ex
+                    is JsonException
+                        or NotSupportedException
+                        or InvalidOperationException
+                        or ArgumentException
+            )
         {
-            throw new JsonException($"The payload could not be deserialized as '{typeof(TPayload).Name}'.", ex);
+            throw new JsonException(
+                $"The payload could not be deserialized as '{typeof(TPayload).Name}'.",
+                ex
+            );
         }
     }
 }
-
-
-
-
-

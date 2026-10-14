@@ -2,24 +2,33 @@ using System.Text.Json;
 
 namespace Lantern.Models;
 
-/// <summary>Persists installation identity separately from editable application settings.</summary>
-public static class LocalDeviceIdentityProvider
+/// <summary>Single-writer, atomic identity storage. Storage failures are surfaced to the owner.</summary>
+internal sealed class LocalDeviceIdentityProvider
 {
-    public static Guid LoadOrCreateDeviceId(string? directory = null)
+    public static Guid LoadOrCreateDeviceId(string? storagePath = null)
     {
-        directory ??= Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lantern");
-        var path = Path.Combine(directory, "device-id.json");
+        var path = Path.GetFullPath(storagePath ?? Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Lantern", "device-id.json"));
+        Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        // An exclusive companion lock also coordinates different application processes.
+        using var ownership = new FileStream(path + ".lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         if (File.Exists(path))
         {
-            using var document = JsonDocument.Parse(File.ReadAllText(path));
-            if (document.RootElement.TryGetProperty("deviceId", out var element) && element.TryGetGuid(out var existing) && existing != Guid.Empty)
-                return existing;
-            throw new InvalidDataException("The saved device identity is invalid. Restore or remove device-id.json to create a new identity.");
+            using var document = JsonDocument.Parse(File.ReadAllBytes(path));
+            if (document.RootElement.ValueKind != JsonValueKind.Object
+                || !document.RootElement.TryGetProperty("deviceId", out var element)
+                || element.ValueKind != JsonValueKind.String || !element.TryGetGuid(out var id) || id == Guid.Empty)
+                throw new InvalidDataException("The persisted device identity is invalid; repair it explicitly rather than silently replacing it.");
+            return id;
         }
-        var id = Guid.NewGuid();
-        Directory.CreateDirectory(directory);
-        using var output = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None);
-        JsonSerializer.Serialize(output, new { deviceId = id });
-        return id;
+        var newId = Guid.NewGuid();
+        var temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        try
+        {
+            File.WriteAllText(temporary, JsonSerializer.Serialize(new { deviceId = newId }));
+            File.Move(temporary, path, overwrite: false);
+        }
+        finally { if (File.Exists(temporary)) File.Delete(temporary); }
+        return newId;
     }
 }

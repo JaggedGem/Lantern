@@ -1,0 +1,183 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms</value>
+  </resheader>
+  <data name="Starting_Lantern" xml:space="preserve">
+    <value>Starting Lantern…</value>
+  </data>
+  <data name="Starting_network_services" xml:space="preserve">
+    <value>Starting network services…</value>
+  </data>
+  <data name="Looking_for_Lantern_devices_on_your_local_network" xml:space="preserve">
+    <value>Looking for Lantern devices on your local network…</value>
+  </data>
+  <data name="No_files_selected_Add_files_or_drop_them_here" xml:space="preserve">
+    <value>No files selected. Add files or drop them here.</value>
+  </data>
+  <data name="Your_transfers_will_appear_here" xml:space="preserve">
+    <value>Your transfers will appear here.</value>
+  </data>
+  <data name="Loading_installation_identity" xml:space="preserve">
+    <value>Loading installation identity…</value>
+  </data>
+  <data name="Every_incoming_transfer_requires_your_approval" xml:space="preserve">
+    <value>Every incoming transfer requires your approval.</value>
+  </data>
+  <data name="Lantern" xml:space="preserve">
+    <value>Lantern</value>
+  </data>
+  <data name="A_simple_way_to_share_files_with_devices_nearby" xml:space="preserve">
+    <value>A simple way to share files with devices nearby.</value>
+  </data>
+  <data name="Retry_connection" xml:space="preserve">
+    <value>&amp;Retry connection</value>
+  </data>
+  <data name="Devices_nearby" xml:space="preserve">
+    <value>Devices nearby</value>
+  </data>
+  <data name="Open_Lantern_on_another_PC_connected_to_the_same_local_network" xml:space="preserve">
+    <value>Open Lantern on another PC connected to the same local network.</value>
+  </data>
+  <data name="Send_to_selected" xml:space="preserve">
+    <value>&amp;Send to selected</value>
+  </data>
+  <data name="Refresh" xml:space="preserve">
+    <value>&amp;Refresh</value>
+  </data>
+  <data name="Pair_device" xml:space="preserve">
+    <value>Pair device…</value>
+  </data>
+  <data name="Add_by_IP" xml:space="preserve">
+    <value>Add by &amp;IP…</value>
+  </data>
+  <data name="Send_files" xml:space="preserve">
+    <value>Send files</value>
+  </data>
+  <data name="Choose_a_recipient_add_your_files_then_send_The_recipient_approves_each_tra" xml:space="preserve">
+    <value>Choose a recipient, add your files, then send. The recipient approves each transfer.</value>
+  </data>
+  <data name="Remove_selected" xml:space="preserve">
+    <value>&amp;Remove selected</value>
+  </data>
+  <data name="Add_files" xml:space="preserve">
+    <value>&amp;Add files…</value>
+  </data>
+  <data name="Add_folder" xml:space="preserve">
+    <value>Add folder…</value>
+  </data>
+  <data name="Clear_files" xml:space="preserve">
+    <value>Clear files</value>
+  </data>
+  <data name="Send_files_2" xml:space="preserve">
+    <value>&amp;Send files</value>
+  </data>
+  <data name="Pair_recipient" xml:space="preserve">
+    <value>Pair recipient…</value>
+  </data>
+  <data name="Transfer_activity" xml:space="preserve">
+    <value>Transfer activity</value>
+  </data>
+  <data name="Track_current_transfers_and_your_last_256_finished_transfers_Double_click_a" xml:space="preserve">
+    <value>Track current transfers and your last 256 finished transfers. Double-click a row for details.</value>
+  </data>
+  <data name="Cancel_transfer" xml:space="preserve">
+    <value>&amp;Cancel transfer</value>
+  </data>
+  <data name="Open_received_folder" xml:space="preserve">
+    <value>Open received &amp;folder</value>
+  </data>
+  <data name="Details" xml:space="preserve">
+    <value>Details…</value>
+  </data>
+  <data name="Clear_finished" xml:space="preserve">
+    <value>Clear finished</value>
+  </data>
+  <data name="Settings_security" xml:space="preserve">
+    <value>Settings &amp; security</value>
+  </data>
+  <data name="Changes_apply_when_you_save_Network_services_restart_with_the_new_settings" xml:space="preserve">
+    <value>Changes apply when you save. Network services restart with the new settings.</value>
+  </data>
+  <data name="Browse" xml:space="preserve">
+    <value>Browse…</value>
+  </data>
+  <data name="Pair_both_PCs_using_their_device_IDs_and_verified_fingerprints_File_transfe" xml:space="preserve">
+    <value>Pair both PCs using their device IDs and verified fingerprints. File transfers use mutual TLS encryption and SHA-256 verification.</value>
+  </data>
+  <data name="Save_settings" xml:space="preserve">
+    <value>&amp;Save settings</value>
+  </data>
+  <data name="Open_receive_folder" xml:space="preserve">
+    <value>Open receive folder</value>
+  </data>
+  <data name="Copy_fingerprint" xml:space="preserve">
+    <value>Copy fingerprint</value>
+  </data>
+  <data name="Paired_devices" xml:space="preserve">
+    <value>Paired devices…</value>
+  </data>
+  <data name="Diagnostics" xml:space="preserve">
+    <value>Diagnostics…</value>
+  </data>
+  <data name="Nearby_devices" xml:space="preserve">
+    <value>Nearby devices</value>
+  </data>
+  <data name="Activity" xml:space="preserve">
+    <value>Activity</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Text" xml:space="preserve">
+    <value />
+  </data>
+  <data name="Enter_the_other_PC_s_identity_and_connection_details_from_its_Settings_Pair" xml:space="preserve">
+    <value>Enter the other PC's identity and connection details from its Settings. Pair both PCs before sending.</value>
+  </data>
+  <data name="Add_device" xml:space="preserve">
+    <value>Add device</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="This_request_has_a_limited_time_to_respond_Closing_this_window_declines_it" xml:space="preserve">
+    <value>This request has a limited time to respond. Closing this window declines it.</value>
+  </data>
+  <data name="Decline" xml:space="preserve">
+    <value>Decline</value>
+  </data>
+  <data name="Transfer_details" xml:space="preserve">
+    <value>Transfer details</value>
+  </data>
+  <data name="Cancel_transfer_2" xml:space="preserve">
+    <value>Cancel transfer</value>
+  </data>
+  <data name="Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Pair_on_both_PCs" xml:space="preserve">
+    <value>Pair on both PCs</value>
+  </data>
+  <data name="Exchange_device_IDs_and_fingerprints_with_the_other_person_through_a_truste" xml:space="preserve">
+    <value>Exchange device IDs and fingerprints with the other person through a trusted channel. Enter their identity below, then have them enter yours on their PC. Discovery alone does not prove identity.</value>
+  </data>
+  <data name="Other_PC_s_device_ID" xml:space="preserve">
+    <value>Other PC's device ID</value>
+  </data>
+  <data name="Other_PC_s_verified_SHA_256_fingerprint" xml:space="preserve">
+    <value>Other PC's verified SHA-256 fingerprint</value>
+  </data>
+  <data name="Trust_verified_identity" xml:space="preserve">
+    <value>Trust verified identity</value>
+  </data>
+</root>

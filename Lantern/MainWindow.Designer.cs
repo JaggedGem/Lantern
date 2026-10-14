@@ -9,9 +9,11 @@ public partial class MainWindow
     {
         if (disposing)
         {
+            Microsoft.Win32.SystemEvents.UserPreferenceChanged -= OnSystemPreferenceChanged;
             _refreshTimer?.Dispose();
             components?.Dispose();
             _lifetime.Dispose();
+            _lifecycle.Dispose();
         }
         base.Dispose(disposing);
     }
@@ -20,7 +22,8 @@ public partial class MainWindow
     {
         components = new System.ComponentModel.Container();
         SuspendLayout();
-        AutoScaleMode = AutoScaleMode.Font;
+        AutoScaleDimensions = new SizeF(96, 96);
+        AutoScaleMode = AutoScaleMode.Dpi;
         Font = new Font("Segoe UI", 10);
         ClientSize = new Size(1120, 800);
         MinimumSize = new Size(980, 700);
