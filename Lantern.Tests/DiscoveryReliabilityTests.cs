@@ -16,6 +16,23 @@ public sealed class DiscoveryReliabilityTests
             .Invoke(discovery, [data, new IPEndPoint(IPAddress.Parse("192.168.1.20"), 12345)]);
 
     [Fact]
+    public async Task RapidShutdownDrainsPendingHeartbeatBeforeDisposingSocket()
+    {
+        using var probe = new System.Net.Sockets.UdpClient(new System.Net.IPEndPoint(System.Net.IPAddress.Any, 0));
+        var port = ((System.Net.IPEndPoint)probe.Client.LocalEndPoint!).Port;
+        probe.Dispose();
+        for (var index = 0; index < 50; index++)
+        {
+            await using var discovery = new DeviceDiscovery(new LocalDevice(Guid.NewGuid(), "rapid", 5000),
+                new DiscoveryOptions { UdpPort = port, HeartbeatInterval = TimeSpan.FromMilliseconds(1) });
+            await discovery.StartAsync();
+            await Task.Yield();
+            await discovery.StopAsync().WaitAsync(TimeSpan.FromSeconds(5));
+            Assert.False(discovery.IsRunning);
+        }
+    }
+
+    [Fact]
     public void DiscoveryKeepsOfflineIdentityAndResurrectsItWithoutFalsifyingLastSeen()
     {
         var clock = new ManualClock();

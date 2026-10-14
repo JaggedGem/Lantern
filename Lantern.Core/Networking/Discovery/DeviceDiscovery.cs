@@ -113,7 +113,9 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
     private async Task StopCoreAsync(UdpClient socket, CancellationTokenSource shutdown, Task completion)
     {
         await Task.CompletedTask.ConfigureAwait(ConfigureAwaitOptions.ForceYielding);
-        try { shutdown.Cancel(); socket.Dispose(); await completion.ConfigureAwait(false); }
+        // UdpClient.SendAsync reads its socket field internally. Disposing concurrently
+        // can race that read. Cancellation wakes receives; drain all I/O before disposal.
+        try { shutdown.Cancel(); await completion.ConfigureAwait(false); }
         finally
         {
             socket.Dispose();
@@ -128,8 +130,8 @@ public sealed class DeviceDiscovery : IDisposable, IAsyncDisposable
         var tasks = new[] { ReceiveAsync(socket, shutdown.Token), AnnounceAsync(socket, shutdown.Token), ExpireAsync(shutdown.Token) };
         await Task.WhenAny(tasks).ConfigureAwait(false);
         shutdown.Cancel();
-        socket.Dispose();
-        await Task.WhenAll(tasks).ConfigureAwait(false);
+        try { await Task.WhenAll(tasks).ConfigureAwait(false); }
+        finally { socket.Dispose(); }
     }
 
     private async Task ReceiveAsync(UdpClient socket, CancellationToken token)
