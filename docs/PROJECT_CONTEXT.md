@@ -15,6 +15,8 @@ chosen destination before Close disposes its native text box. The UI workflow
 asserts that the destination survives closing. The current editing environment
 has no .NET SDK or PowerShell and its network proxy is unreachable; execution
 validation is performed through GitHub Actions.
+Discovery start/stop integration tests select an available UDP port rather than
+binding the production default, which Windows runners can reserve/exclude.
 
 `scripts/Publish.ps1` now prompts for Bundled or FrameworkDependent, with an
 explicit `-RuntimeMode` for unattended runs. Both app and CLI retain single-file

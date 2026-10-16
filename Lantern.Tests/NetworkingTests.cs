@@ -382,7 +382,7 @@ public sealed class DiscoveryTests
     public async Task DeviceDiscovery_StartsAndStops()
     {
         var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
-        await using var discovery = new DeviceDiscovery(localDevice);
+        await using var discovery = new DeviceDiscovery(localDevice, DiscoveryTestCollection.AvailablePortOptions());
 
         Assert.False(discovery.IsRunning);
 
@@ -397,7 +397,7 @@ public sealed class DiscoveryTests
     public async Task DeviceDiscovery_RejectsDoubleStart()
     {
         var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
-        await using var discovery = new DeviceDiscovery(localDevice);
+        await using var discovery = new DeviceDiscovery(localDevice, DiscoveryTestCollection.AvailablePortOptions());
 
         await discovery.StartAsync();
         await Assert.ThrowsAsync<InvalidOperationException>(() => discovery.StartAsync());
@@ -408,7 +408,7 @@ public sealed class DiscoveryTests
     public async Task DeviceDiscovery_RepeatedStartStopWorks()
     {
         var localDevice = new LocalDevice(Guid.NewGuid(), "LocalTest", 5000);
-        await using var discovery = new DeviceDiscovery(localDevice);
+        await using var discovery = new DeviceDiscovery(localDevice, DiscoveryTestCollection.AvailablePortOptions());
 
         await discovery.StartAsync();
         Assert.True(discovery.IsRunning);
