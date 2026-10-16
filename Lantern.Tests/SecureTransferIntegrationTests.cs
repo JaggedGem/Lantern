@@ -69,7 +69,7 @@ public sealed class SecureTransferIntegrationTests : IAsyncLifetime
         int notifications = 0;
         _sender.NotificationRequested += (_, _) => notifications++;
         var result = await _sender.Transfers.SendAsync(Peer, [file, empty]);
-        Assert.Equal(TransferStatus.Completed, result.Status);
+        Assert.True(result.Status == TransferStatus.Completed, result.Error?.Description);
         var received = Path.Combine(Destination, "Lantern-" + result.Id.ToString("N"));
         Assert.Equal(
             await File.ReadAllBytesAsync(file.SourcePath),
@@ -87,6 +87,30 @@ public sealed class SecureTransferIntegrationTests : IAsyncLifetime
         Assert.Equal(fingerprint, _sender.Fingerprint);
         Assert.Equal(result.Id, Assert.Single(_sender.History.GetEntries()).Id);
         Assert.Single(_sender.Trust.GetTrustedPeers());
+    }
+
+    [Fact]
+    public async Task ReopenedIdentitiesCanAuthenticateAndTransferFiles()
+    {
+        var senderFingerprint = _sender.Fingerprint;
+        var receiverFingerprint = _receiver.Fingerprint;
+        await _sender.DisposeAsync();
+        await _receiver.DisposeAsync();
+        _sender = Create(SenderData);
+        _receiver = Create(ReceiverData);
+        Assert.Equal(senderFingerprint, _sender.Fingerprint);
+        Assert.Equal(receiverFingerprint, _receiver.Fingerprint);
+        await _sender.StartAsync();
+        await _receiver.StartAsync();
+        _receiver.Transfers.IncomingTransferRequested += (_, request) =>
+            request.Accept(Destination);
+
+        var file = await SourceAsync("reopened.bin", 1024);
+        var result = await _sender.Transfers.SendAsync(Peer, [file]);
+
+        Assert.True(result.Status == TransferStatus.Completed, result.Error?.Description);
+        var received = Path.Combine(Destination, "Lantern-" + result.Id.ToString("N"), file.Metadata.RelativePath);
+        Assert.Equal(await File.ReadAllBytesAsync(file.SourcePath), await File.ReadAllBytesAsync(received));
     }
 
     [Theory]

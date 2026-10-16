@@ -6,6 +6,15 @@ namespace Lantern.Security;
 /// <summary>Stable local certificate. The containing directory must be private to the OS user.</summary>
 public sealed class PeerIdentity : IDisposable
 {
+    // Schannel needs a named private key on Windows. Do not use PersistKeySet:
+    // the imported key container should be removed when the certificate is disposed.
+    // Other platforms can keep the imported key entirely in memory.
+    private static X509KeyStorageFlags KeyStorageFlags =>
+        X509KeyStorageFlags.Exportable
+        | (OperatingSystem.IsWindows()
+            ? X509KeyStorageFlags.UserKeySet
+            : X509KeyStorageFlags.EphemeralKeySet);
+
     public X509Certificate2 Certificate { get; }
     public string Fingerprint => Certificate.GetCertHashString(HashAlgorithmName.SHA256);
     public Guid DeviceId { get; }
@@ -26,7 +35,7 @@ public sealed class PeerIdentity : IDisposable
             var certificate = X509CertificateLoader.LoadPkcs12FromFile(
                 path,
                 null,
-                X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet
+                KeyStorageFlags
             );
             if (
                 !certificate.HasPrivateKey
@@ -66,7 +75,7 @@ public sealed class PeerIdentity : IDisposable
             X509CertificateLoader.LoadPkcs12FromFile(
                 path,
                 null,
-                X509KeyStorageFlags.Exportable | X509KeyStorageFlags.EphemeralKeySet
+                KeyStorageFlags
             )
         );
     }
