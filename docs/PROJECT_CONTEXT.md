@@ -8,8 +8,13 @@ private keys for TLS credentials; other platforms retain EphemeralKeySet.
 PersistKeySet is intentionally omitted so disposal releases temporary imported
 key containers. The PFX and paired fingerprints are preserved. A new integration
 test reopens both identities and transfers a file. These changes need Windows CI
-verification; the current editing environment has no .NET SDK or PowerShell and
-its network proxy is unreachable.
+verification on the final revision. Initial CI passed all 375 backend cases on
+Windows and Linux, both solution builds and both portable packaging modes.
+It also exposed a receive-dialog lifetime bug: acceptance now captures the
+chosen destination before Close disposes its native text box. The UI workflow
+asserts that the destination survives closing. The current editing environment
+has no .NET SDK or PowerShell and its network proxy is unreachable; execution
+validation is performed through GitHub Actions.
 
 `scripts/Publish.ps1` now prompts for Bundled or FrameworkDependent, with an
 explicit `-RuntimeMode` for unattended runs. Both app and CLI retain single-file

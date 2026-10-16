@@ -79,6 +79,7 @@ public sealed class WorkflowTests
         Assert.Contains("incoming.txt", Find<TextBox>(dialog, "Request details").Text);
         var destination = Path.Combine(directory, "chosen-destination"); Find<TextBox>(dialog, "Receive destination").Text = destination;
         Find<Button>(dialog, "Accept files").PerformClick();
+        Assert.Equal(destination, dialog.DestinationDirectory);
         Assert.Equal(TransferStatus.Completed, (await task).Status);
         Assert.Equal("expected incoming file", await File.ReadAllTextAsync(Directory.GetFiles(destination, "incoming.txt", SearchOption.AllDirectories).Single()));
         var again = peer.Transfers.SendAsync(DeviceFor(backend), files);
