@@ -2,7 +2,10 @@
   #define AppVersion "0.1.0"
 #endif
 #ifndef SourceDirectory
-  #define SourceDirectory "..\artifacts\win-x64"
+  #define SourceDirectory "..\artifacts\win-x64\Bundled"
+#endif
+#ifndef PackageFlavor
+  #define PackageFlavor "Bundled"
 #endif
 [Setup]
 AppId={{0B4D76D1-EC84-430F-BC31-BDDA2C3D0D43}
@@ -14,7 +17,7 @@ PrivilegesRequired=lowest
 ArchitecturesAllowed=x64compatible
 ArchitecturesInstallIn64BitMode=x64compatible
 OutputDir=..\artifacts
-OutputBaseFilename=Lantern-{#AppVersion}-Setup
+OutputBaseFilename=Lantern-{#AppVersion}-{#PackageFlavor}-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern

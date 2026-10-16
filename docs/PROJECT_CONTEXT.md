@@ -1,6 +1,27 @@
 # Lantern: durable project context
 
-Updated 2026-10-14.
+Updated 2026-10-16.
+
+The Windows publish failure reported two TLS integration failures. Certificate
+imports now use UserKeySet on Windows because Schannel cannot use ephemeral
+private keys for TLS credentials; other platforms retain EphemeralKeySet.
+PersistKeySet is intentionally omitted so disposal releases temporary imported
+key containers. The PFX and paired fingerprints are preserved. A new integration
+test reopens both identities and transfers a file. These changes need Windows CI
+verification on the final revision. Initial CI passed all 375 backend cases on
+Windows and Linux, both solution builds and both portable packaging modes.
+It also exposed a receive-dialog lifetime bug: acceptance now captures the
+chosen destination before Close disposes its native text box. The UI workflow
+asserts that the destination survives closing. The current editing environment
+has no .NET SDK or PowerShell and its network proxy is unreachable; execution
+validation is performed through GitHub Actions.
+Discovery start/stop integration tests select an available UDP port rather than
+binding the production default, which Windows runners can reserve/exclude.
+
+`scripts/Publish.ps1` now prompts for Bundled or FrameworkDependent, with an
+explicit `-RuntimeMode` for unattended runs. Both app and CLI retain single-file
+publishing, tests remain mandatory, and mode-specific output directories and
+ZIP/installer names prevent cross-mode collisions. CI passes each mode explicitly.
 
 Read `PROJECT_SPECIFICATION.md` for the original full requirements. The user now explicitly authorizes implementing the full UI, preserving all completed backend work, making milestone commits and pushing all final commits to origin/work. Milestone commits and the final push to `origin/work` are authorized. This supersedes the older request to stop after Phase 4.
 

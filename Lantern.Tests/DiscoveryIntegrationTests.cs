@@ -22,7 +22,7 @@ public sealed class DiscoveryIntegrationTests : IAsyncLifetime
         _localDevice1 = new LocalDevice(Guid.NewGuid(), "Device1", 5001);
 
         // Create discovery instance
-        _discovery1 = new DeviceDiscovery(_localDevice1);
+        _discovery1 = new DeviceDiscovery(_localDevice1, DiscoveryTestCollection.AvailablePortOptions());
     }
 
     public async Task DisposeAsync()

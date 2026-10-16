@@ -26,9 +26,18 @@ For the custom publish step to run reliably, clear **Use ReSharper Build** under
 dotnet build Lantern.sln -c Release -warnaserror
 dotnet test Lantern.Tests -c Release
 dotnet test Lantern.UiTests -c Release  # Windows required
-./scripts/Publish.ps1                  # Windows portable packages
+./scripts/Publish.ps1                  # Prompt: bundle .NET or require an installed runtime
 ./scripts/Publish.ps1 -BuildInstaller  # Requires Inno Setup 6
 ```
+
+For unattended publishing, pass `-RuntimeMode Bundled` or
+`-RuntimeMode FrameworkDependent`. Both modes publish the desktop app and CLI
+as single executables and run backend tests first. Bundled packages include .NET;
+framework-dependent packages require the matching .NET 10 Desktop Runtime
+on the target Windows PC (the CLI alone needs the base .NET 10 runtime).
+`-Runtime win-arm64` selects ARM64 portable packages; installers support x64.
+Outputs are separated under `artifacts/<runtime>/<mode>`, and ZIP/installer
+filenames include the mode so the two variants can coexist.
 
 The portable backend and its tests run on Linux as well. Windows UI execution, physical LAN operation, multi-monitor DPI, accessibility and installer execution require their own platform checks; a cross-build does not establish those results.
 

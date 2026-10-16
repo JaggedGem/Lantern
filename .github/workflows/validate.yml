@@ -44,7 +44,9 @@ jobs:
             }
           }
       - shell: pwsh
-        run: ./scripts/Publish.ps1
+        run: |
+          ./scripts/Publish.ps1 -RuntimeMode Bundled
+          ./scripts/Publish.ps1 -RuntimeMode FrameworkDependent
       - uses: actions/upload-artifact@v4
         with:
           name: windows-portable

@@ -3,7 +3,8 @@ namespace Lantern.UI;
 /// <summary>A modeless approval window so progress, cancellation and shutdown keep working.</summary>
 internal sealed class DecisionDialog : Form
 {
-    public string DestinationDirectory => _destination?.Text.Trim() ?? "";
+    public string DestinationDirectory => Accepted ? _acceptedDestination : _destination?.Text.Trim() ?? "";
+    private string _acceptedDestination = "";
     private TextBox? _destination;
     public bool Accepted { get; private set; }
     public DecisionDialog(string title, string description, string details, string acceptText, string? destination = null)
@@ -18,7 +19,14 @@ internal sealed class DecisionDialog : Form
         layout.Controls.Add(new ThemedTextBox { Text = details, Multiline = true, ReadOnly = true, Dock = DockStyle.Fill,
             ScrollBars = ScrollBars.Vertical, AccessibleName = "Request details" }, 0, 1);
         layout.Controls.Add(Ui.Label(Ui.Text("This_request_has_a_limited_time_to_respond_Closing_this_window_declines_it")), 0, 2);
-        var accept = Ui.Button(acceptText, (_, _) => { Accepted = true; Close(); }, true);
+        var accept = Ui.Button(acceptText, (_, _) =>
+        {
+            // Close disposes the modeless form and its native text box. Capture
+            // the user's choice before callers resume from AskAsync.
+            _acceptedDestination = _destination?.Text.Trim() ?? "";
+            Accepted = true;
+            Close();
+        }, true);
         var reject = Ui.Button(Ui.Text("Decline"), (_, _) => Close());
         if (destination is not null)
         {
